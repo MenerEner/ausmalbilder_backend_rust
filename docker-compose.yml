@@ -1,18 +1,7 @@
+name: ausmalbilder_backend_rust
 services:
-  ausmalbilder_backend_rust:
-    build: .
-    container_name: ausmalbilder_backend_rust
-    restart: always
-    ports:
-      - "8081:8081"
-    environment:
-      - API__SERVER__HOST=0.0.0.0
-      - API__SERVER__PORT=8081
-    depends_on:
-      - db
-
   db:
-    image: postgres:latest
+    image: postgres:17
     container_name: ausmalbilder_db
     restart: always
     environment:
@@ -25,7 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:8.14
     container_name: ausmalbilder_pgadmin
     restart: always
     environment:
@@ -35,6 +24,5 @@ services:
       - "8080:80"
     depends_on:
       - db
-
 volumes:
   postgres_data:
