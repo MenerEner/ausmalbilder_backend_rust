@@ -1,4 +1,16 @@
 services:
+  ausmalbilder_backend_rust:
+    build: .
+    container_name: ausmalbilder_backend_rust
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - API__SERVER__HOST=0.0.0.0
+      - API__SERVER__PORT=8081
+    depends_on:
+      - db
+
   db:
     image: postgres:latest
     container_name: ausmalbilder_db
