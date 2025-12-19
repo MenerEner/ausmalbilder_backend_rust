@@ -1,0 +1,15 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tracing = "0.1"
+axum = "0.8"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+domain_users = { path = "../domain_users"}
+shared = { path = "../shared"}
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
