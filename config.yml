@@ -1,3 +1,5 @@
+env: local
+
 server:
   port: 8081
   host: localhost

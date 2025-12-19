@@ -1,4 +1,3 @@
-use std::net::SocketAddr;
 use std::process::ExitCode;
 use tracing_subscriber::{fmt, EnvFilter};
 use shared::config::Settings;
@@ -45,7 +44,7 @@ fn init_modules(settings: Settings) {
 async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Staring application");
     init_tracing();
-    let mut settings: Settings = init_settings();
+    let settings: Settings = init_settings();
 
     let app = http::router();
 

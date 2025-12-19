@@ -1,8 +1,16 @@
-use std::net::{IpAddr, SocketAddr};
+mod server_settings;
+mod logging_settings;
+
+use crate::config::server_settings::ServerSettings;
 use serde::Deserialize;
+use std::net::{IpAddr, SocketAddr};
+use crate::config::logging_settings::LoggingSettings;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
+    #[serde(default)]
+    pub env: String,
+
     #[serde(default)]
     pub server: ServerSettings,
 
@@ -13,48 +21,11 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            env: "prod".to_string(),
             server: ServerSettings::default(),
             logging: LoggingSettings::default(),
         }
     }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ServerSettings {
-    #[serde(default = "default_host")]
-    pub host: String,
-
-    #[serde(default = "default_port")]
-    pub port: u16,
-}
-
-impl Default for ServerSettings {
-    fn default() -> Self {
-        Self {
-            host: default_host(),
-            port: default_port(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct LoggingSettings {
-    #[serde(default)]
-    pub format: Option<String>,
-}
-
-impl Default for LoggingSettings {
-    fn default() -> Self {
-        Self { format: None }
-    }
-}
-
-fn default_host() -> String {
-    "127.0.0.1".to_string()
-}
-
-fn default_port() -> u16 {
-    3000
 }
 
 impl Settings {
