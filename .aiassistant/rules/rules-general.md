@@ -221,3 +221,52 @@ When providing code changes:
 - Ensure code is rustfmt/clippy clean; do not introduce new warnings.
 
 ---
+
+### 10.1 Database rules (SeaORM)
+
+- **SeaORM is infrastructure-only**:
+  - ✅ Allowed in `infrastructure` (and optionally a dedicated `migration` crate)
+  - ❌ Not allowed in `domain-*`, `application`, or `shared`
+
+- **No persistence leakage across boundaries**:
+  - `application` defines repository **traits (ports)**.
+  - `infrastructure` implements those ports using SeaORM.
+  - ❌ Do not expose SeaORM types (`Entity/Model/ActiveModel`, `DatabaseConnection`, `DbErr`, query builders) in public APIs of `application` or `domain-*`.
+
+- **Entities vs domain models**:
+  - SeaORM `Entity/Model/ActiveModel` represent the **database schema**, not the domain.
+  - Mapping between persistence models and domain types happens **inside infrastructure** (e.g., `impl TryFrom<DbModel> for DomainType` in `infrastructure`).
+
+- **Module layout suggestion (inside `infrastructure`)**:
+  - `infrastructure::db::entities` (SeaORM generated entities)
+  - `infrastructure::db::repos` (repo implementations using SeaORM)
+  - `infrastructure::db::mapper` (domain ↔ db mapping helpers)
+
+- **Connection lifecycle**:
+  - Create **one** `DatabaseConnection` at startup (in the binary, e.g., `api/main.rs`).
+  - Store it in `AppState` (or an infra container) and pass it into repositories/services.
+  - Do not create new connections per request.
+
+- **Config sourcing**:
+  - DB URL / pool config must come from typed config in `shared` (loaded by the binary).
+  - ❌ No reading env/config files inside `infrastructure` modules.
+
+- **Transactions**:
+  - For multi-step use-cases requiring atomicity, run them inside a transaction.
+  - Prefer: `application` calls a port like `TransactionManager` / `UnitOfWork` (implemented in `infrastructure` with SeaORM transactions).
+  - If you keep it simpler initially: repositories may accept `&DatabaseConnection`, and infrastructure can internally use SeaORM transactions where needed—without exposing `DatabaseTransaction` outside `infrastructure`.
+
+- **Migrations**:
+  - Prefer a dedicated crate (e.g., `migration`) using `sea-orm-migration`.
+  - Run migrations via CI/CD or an explicit command.
+  - ❌ Do not auto-run migrations on app startup in production.
+
+- **Query hygiene**:
+  - Avoid N+1 queries: use relations (`find_related`) or explicit joins.
+  - Enforce pagination on list endpoints and set sensible defaults/limits.
+
+- **Observability**:
+  - DB errors are logged at `infrastructure` / `application` boundaries with `tracing`.
+  - Never log secrets/PII or raw connection strings.
+
+---
