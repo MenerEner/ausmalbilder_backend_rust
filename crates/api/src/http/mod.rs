@@ -12,6 +12,7 @@ use crate::http::users::dtos::{CreateUserRequest, UserResponse};
 #[openapi(
     paths(
         users::handlers::create_user,
+        users::handlers::get_user,
     ),
     components(
         schemas(CreateUserRequest, UserResponse)

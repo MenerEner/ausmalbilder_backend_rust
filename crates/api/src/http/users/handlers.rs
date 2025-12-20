@@ -1,7 +1,8 @@
-use axum::{extract::State, Json, http::StatusCode, response::IntoResponse};
+use axum::{extract::{State, Path}, Json, http::StatusCode, response::IntoResponse};
 use crate::http::state::AppState;
 use crate::http::users::dtos::{CreateUserRequest, UserResponse};
 use application::use_cases::CreateUserInput;
+use uuid::Uuid;
 
 #[utoipa::path(
     post,
@@ -31,6 +32,32 @@ pub async fn create_user(
         }
         Err(e) => {
             tracing::error!(error = %e, "Failed to create user");
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal server error" }))).into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/users/{id}",
+    params(
+        ("id" = Uuid, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "User found", body = UserResponse),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn get_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    match state.get_user_use_case.execute(id).await {
+        Ok(Some(user)) => (StatusCode::OK, Json(UserResponse::from(user))).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "User not found" }))).into_response(),
+        Err(e) => {
+            tracing::error!(error = %e, user_id = %id, "Failed to get user");
             (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal server error" }))).into_response()
         }
     }

@@ -52,9 +52,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let password_hasher = std::sync::Arc::new(infrastructure::security::BcryptHasher);
 
     // Initialize use cases
-    let create_user_use_case = application::use_cases::CreateUserUseCase::new(user_repo, password_hasher);
+    let create_user_use_case = application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher);
+    let get_user_use_case = application::use_cases::GetUserUseCase::new(user_repo);
 
-    let state = AppState::new(db, create_user_use_case);
+    let state = AppState::new(db, create_user_use_case, get_user_use_case);
     let app = http::router(state);
 
     tracing::info!("starting api");
