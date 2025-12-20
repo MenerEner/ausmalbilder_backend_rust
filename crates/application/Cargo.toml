@@ -1,0 +1,11 @@
+[package]
+name = "application"
+version = "0.1.0"
+edition = "2024"
+
+# ... existing code ...
+[dependencies]
+tracing = { version = "0.1.43", optional = true }
+
+[features]
+domain-tracing = ["dep:tracing"]
