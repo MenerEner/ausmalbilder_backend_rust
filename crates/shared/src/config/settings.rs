@@ -27,7 +27,6 @@ impl Default for Settings {
 
 impl Settings {
     pub fn load() -> Result<Self, config::ConfigError> {
-        tracing::info!("loading config");
         let defaults = Settings::default();
 
         let builder = config::Config::builder()

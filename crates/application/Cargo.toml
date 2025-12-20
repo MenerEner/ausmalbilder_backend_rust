@@ -6,6 +6,7 @@ edition = "2024"
 # ... existing code ...
 [dependencies]
 tracing = { version = "0.1.43", optional = true }
+domain-users = { path = "../domain-users" }
 
 [features]
-domain-tracing = ["dep:tracing"]
+tracing = ["dep:tracing"]
