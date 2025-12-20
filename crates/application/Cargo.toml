@@ -7,6 +7,8 @@ edition = "2024"
 [dependencies]
 tracing = { version = "0.1.43", optional = true }
 domain-users = { path = "../domain-users" }
+bcrypt = "0.17"
+async-trait = "0.1"
 
 [features]
 tracing = ["dep:tracing"]

@@ -1,4 +1,7 @@
 pub mod telemetry;
+pub mod models;
+
+pub use models::User;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

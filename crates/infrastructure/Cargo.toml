@@ -8,3 +8,6 @@ sea-orm = { version = "1.1.0", features = ["sqlx-postgres", "runtime-tokio-rustl
 serde = { version = "1", features = ["derive"] }
 shared = { path = "../shared" }
 domain-users = { path = "../domain-users" }
+application = { path = "../application" }
+bcrypt = "0.17"
+async-trait = "0.1"
