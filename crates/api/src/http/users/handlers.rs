@@ -1,0 +1,27 @@
+use axum::{extract::State, Json, http::StatusCode, response::IntoResponse};
+use crate::http::state::AppState;
+use crate::http::users::dtos::{CreateUserRequest, UserResponse};
+use application::use_cases::CreateUserInput;
+
+pub async fn create_user(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateUserRequest>,
+) -> impl IntoResponse {
+    let input = CreateUserInput {
+        name: payload.name,
+        email: payload.email,
+        phone_number: payload.phone_number,
+        password: payload.password,
+    };
+
+    match state.create_user_use_case.execute(input).await {
+        Ok(user) => (StatusCode::CREATED, Json(UserResponse::from(user))).into_response(),
+        Err(application::use_cases::CreateUserError::AlreadyExists(email)) => {
+            (StatusCode::CONFLICT, Json(serde_json::json!({ "error": format!("User with email {} already exists", email) }))).into_response()
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to create user");
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal server error" }))).into_response()
+        }
+    }
+}

@@ -47,7 +47,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing::info!("initializing database");
     let db = infrastructure::db::init_db(&settings.database).await?;
 
-    let state = AppState::new(db);
+    // Initialize dependencies
+    let user_repo = std::sync::Arc::new(infrastructure::db::repos::PostgresUserRepository::new(db.clone()));
+    let password_hasher = std::sync::Arc::new(infrastructure::security::BcryptHasher);
+
+    // Initialize use cases
+    let create_user_use_case = application::use_cases::CreateUserUseCase::new(user_repo, password_hasher);
+
+    let state = AppState::new(db, create_user_use_case);
     let app = http::router(state);
 
     tracing::info!("starting api");
