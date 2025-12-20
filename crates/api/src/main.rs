@@ -37,10 +37,6 @@ fn init_settings() -> Settings {
     settings
 }
 
-fn init_modules(settings: Settings) {
-
-}
-
 async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Staring application");
     init_tracing();
@@ -52,7 +48,6 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let bind_addr = format!("{}:{}", settings.server.host, settings.server.port);
     let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
-    let addr = listener.local_addr()?;
 
     println!("listening on http://{bind_addr}");
     axum::serve(listener, app).await?;
