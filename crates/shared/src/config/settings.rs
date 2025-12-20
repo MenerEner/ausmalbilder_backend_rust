@@ -2,6 +2,7 @@ use serde::Deserialize;
 use std::net::{IpAddr, SocketAddr};
 use crate::config::server_settings::ServerSettings;
 use crate::config::logging_settings::LoggingSettings;
+use crate::config::database_settings::DatabaseSettings;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
@@ -13,6 +14,9 @@ pub struct Settings {
 
     #[serde(default)]
     pub logging: LoggingSettings,
+
+    #[serde(default)]
+    pub database: DatabaseSettings,
 }
 
 impl Default for Settings {
@@ -21,6 +25,7 @@ impl Default for Settings {
             env: "prod".to_string(),
             server: ServerSettings::default(),
             logging: LoggingSettings::default(),
+            database: DatabaseSettings::default(),
         }
     }
 }
@@ -42,6 +47,11 @@ impl Settings {
         let mut settings: Settings = builder.build()?.try_deserialize()?;
 
         // Railway-friendly overrides
+        if let Ok(url) = std::env::var("DATABASE_URL") {
+            if !url.trim().is_empty() {
+                settings.database.url = url;
+            }
+        }
         if let Ok(port) = std::env::var("PORT") {
             if let Ok(p) = port.parse::<u16>() {
                 settings.server.port = p;

@@ -3,3 +3,6 @@ env: local
 server:
   port: 8081
   host: localhost
+
+database:
+  url: postgres://user:password@localhost:5432/ausmalbilder

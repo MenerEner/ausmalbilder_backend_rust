@@ -1,6 +1,7 @@
 use std::process::ExitCode;
 use tracing_subscriber::{fmt, EnvFilter};
 use shared::config::Settings;
+use crate::http::state::AppState;
 
 mod http;
 
@@ -41,8 +42,13 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Staring application");
     init_tracing();
     let settings: Settings = init_settings();
+    tracing::info!(?settings, "configuration loaded");
 
-    let app = http::router();
+    tracing::info!("initializing database");
+    let db = infrastructure::db::init_db(&settings.database).await?;
+
+    let state = AppState::new(db);
+    let app = http::router(state);
 
     tracing::info!("starting api");
 

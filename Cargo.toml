@@ -6,4 +6,5 @@ members = [
     "crates/shared",
     "crates/domain-users",
     "crates/application",
+    "crates/migration",
 ]
