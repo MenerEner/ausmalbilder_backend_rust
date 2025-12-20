@@ -3,6 +3,16 @@ use crate::http::state::AppState;
 use crate::http::users::dtos::{CreateUserRequest, UserResponse};
 use application::use_cases::CreateUserInput;
 
+#[utoipa::path(
+    post,
+    path = "/users",
+    request_body = CreateUserRequest,
+    responses(
+        (status = 201, description = "User created successfully", body = UserResponse),
+        (status = 409, description = "User already exists"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_user(
     State(state): State<AppState>,
     Json(payload): Json<CreateUserRequest>,
