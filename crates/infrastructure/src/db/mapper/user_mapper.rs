@@ -1,0 +1,28 @@
+use crate::db::entities::user::Model as DbUser;
+use domain_users::models::user::User as DomainUser;
+
+pub struct UserMapper;
+
+impl UserMapper {
+    pub fn to_domain(db_user: DbUser) -> DomainUser {
+        DomainUser {
+            id: db_user.id,
+            name: db_user.name,
+            email: db_user.email,
+            phone_number: db_user.phone_number,
+            password_hash: db_user.password_hash,
+            deleted_at: db_user.deleted_at.map(|dt| dt.into()),
+        }
+    }
+
+    pub fn to_db(domain_user: DomainUser) -> DbUser {
+        DbUser {
+            id: domain_user.id,
+            name: domain_user.name,
+            email: domain_user.email,
+            phone_number: domain_user.phone_number,
+            password_hash: domain_user.password_hash,
+            deleted_at: domain_user.deleted_at.map(|dt| dt.into()),
+        }
+    }
+}

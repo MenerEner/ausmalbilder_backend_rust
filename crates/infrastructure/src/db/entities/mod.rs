@@ -1,1 +1,3 @@
-// SeaORM entities will be generated here
+pub mod user;
+
+pub use user::Entity as User;

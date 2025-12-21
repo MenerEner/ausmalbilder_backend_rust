@@ -25,5 +25,3 @@ fn default_host() -> String {
 fn default_port() -> u16 {
     3000
 }
-
-

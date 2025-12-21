@@ -1,1 +1,3 @@
-// Domain ↔ DB mapping helpers
+pub mod user_mapper;
+
+pub use user_mapper::UserMapper;
