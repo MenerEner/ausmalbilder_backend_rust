@@ -68,6 +68,27 @@ pub async fn get_user(
 }
 
 #[utoipa::path(
+    get,
+    path = "/users",
+    responses(
+        (status = 200, description = "List of users", body = Vec<crate::http::ApiResponseUser>),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
+    )
+)]
+pub async fn list_users(
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let users = state.list_users_use_case.execute().await?;
+
+    let response: Vec<UserResponse> = users.into_iter().map(UserResponse::from).collect();
+
+    Ok((
+        StatusCode::OK,
+        Json(ApiResponse::success(response)),
+    ))
+}
+
+#[utoipa::path(
     delete,
     path = "/users/{id}",
     params(

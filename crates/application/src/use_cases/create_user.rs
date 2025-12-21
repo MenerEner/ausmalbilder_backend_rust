@@ -167,6 +167,16 @@ mod tests {
                 .find(|u| u.email == email && !u.is_deleted())
                 .cloned())
         }
+        async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError> {
+            Ok(self
+                .users
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|u| !u.is_deleted())
+                .cloned()
+                .collect())
+        }
     }
 
     struct MockPasswordHasher;

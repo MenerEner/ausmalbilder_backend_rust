@@ -18,6 +18,7 @@ use utoipa_swagger_ui::SwaggerUi;
     paths(
         users::handlers::create_user,
         users::handlers::get_user,
+        users::handlers::list_users,
         users::handlers::delete_user,
     ),
     components(

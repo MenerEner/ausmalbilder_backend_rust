@@ -9,6 +9,7 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, UserRepositoryError>;
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError>;
     async fn find_active_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError>;
+    async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError>;
 }
 
 #[derive(Debug)]

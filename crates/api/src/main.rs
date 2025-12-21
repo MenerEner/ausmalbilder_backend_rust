@@ -55,13 +55,15 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let create_user_use_case =
         application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher);
     let get_user_use_case = application::use_cases::GetUserUseCase::new(user_repo.clone());
-    let delete_user_use_case = application::use_cases::DeleteUserUseCase::new(user_repo);
+    let delete_user_use_case = application::use_cases::DeleteUserUseCase::new(user_repo.clone());
+    let list_users_use_case = application::use_cases::ListUsersUseCase::new(user_repo);
 
     let state = AppState::new(
         db,
         create_user_use_case,
         get_user_use_case,
         delete_user_use_case,
+        list_users_use_case,
     );
     let app = http::router(state);
 

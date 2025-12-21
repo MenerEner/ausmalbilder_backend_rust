@@ -95,3 +95,14 @@ impl From<application::use_cases::DeleteUserError> for AppError {
         }
     }
 }
+
+impl From<application::use_cases::ListUsersError> for AppError {
+    fn from(err: application::use_cases::ListUsersError) -> Self {
+        match err {
+            application::use_cases::ListUsersError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}

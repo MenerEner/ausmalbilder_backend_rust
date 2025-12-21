@@ -92,4 +92,14 @@ impl UserRepository for PostgresUserRepository {
 
         Ok(db_user.map(UserMapper::to_domain))
     }
+
+    async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError> {
+        let db_users = UserEntity::find()
+            .filter(crate::db::entities::user::Column::DeletedAt.is_null())
+            .all(&self.db)
+            .await
+            .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
+
+        Ok(db_users.into_iter().map(UserMapper::to_domain).collect())
+    }
 }
