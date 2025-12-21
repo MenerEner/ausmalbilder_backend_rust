@@ -1,6 +1,11 @@
+mod error;
 mod healthcheck;
+mod response;
 pub mod state;
 mod users;
+
+pub use error::{ApiErrorDetail, ApiErrorResponse, AppError};
+pub use response::{ApiResponse, ApiResponseUser};
 
 use self::state::AppState;
 use crate::http::users::dtos::{CreateUserRequest, UserResponse};
@@ -15,7 +20,13 @@ use utoipa_swagger_ui::SwaggerUi;
         users::handlers::get_user,
     ),
     components(
-        schemas(CreateUserRequest, UserResponse)
+        schemas(
+            CreateUserRequest,
+            UserResponse,
+            ApiResponseUser,
+            ApiErrorResponse,
+            ApiErrorDetail
+        )
     ),
     tags(
         (name = "users", description = "User management endpoints")

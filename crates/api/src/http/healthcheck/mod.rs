@@ -1,16 +1,18 @@
+use crate::http::ApiResponse;
 use crate::http::state::AppState;
 use axum::routing::get;
 use axum::{Json, Router, extract::State};
 use sea_orm::ConnectionTrait;
 use serde::Serialize;
+use utoipa::ToSchema;
 
-#[derive(Serialize)]
-struct HealthResponse {
+#[derive(Serialize, ToSchema)]
+pub struct HealthResponse {
     status: &'static str,
     database: &'static str,
 }
 
-async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
+async fn health(State(state): State<AppState>) -> Json<ApiResponse<HealthResponse>> {
     let db_status = match state
         .db
         .execute(sea_orm::Statement::from_string(
@@ -23,10 +25,10 @@ async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
         Err(_) => "down",
     };
 
-    Json(HealthResponse {
+    Json(ApiResponse::success(HealthResponse {
         status: "ok",
         database: db_status,
-    })
+    }))
 }
 
 pub fn router() -> Router<AppState> {

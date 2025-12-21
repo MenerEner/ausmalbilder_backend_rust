@@ -1,3 +1,5 @@
+use crate::http::ApiResponse;
+use crate::http::AppError;
 use crate::http::state::AppState;
 use crate::http::users::dtos::{CreateUserRequest, UserResponse};
 use application::use_cases::CreateUserInput;
@@ -14,15 +16,15 @@ use uuid::Uuid;
     path = "/users",
     request_body = CreateUserRequest,
     responses(
-        (status = 201, description = "User created successfully", body = UserResponse),
-        (status = 409, description = "User already exists"),
-        (status = 500, description = "Internal server error")
+        (status = 201, description = "User created successfully", body = crate::http::ApiResponseUser),
+        (status = 409, description = "User already exists", body = crate::http::ApiErrorResponse),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
     )
 )]
 pub async fn create_user(
     State(state): State<AppState>,
     Json(payload): Json<CreateUserRequest>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     let input = CreateUserInput {
         name: payload.name,
         email: payload.email,
@@ -30,24 +32,12 @@ pub async fn create_user(
         password: payload.password,
     };
 
-    match state.create_user_use_case.execute(input).await {
-        Ok(user) => (StatusCode::CREATED, Json(UserResponse::from(user))).into_response(),
-        Err(application::use_cases::CreateUserError::AlreadyExists(email)) => (
-            StatusCode::CONFLICT,
-            Json(
-                serde_json::json!({ "error": format!("User with email {} already exists", email) }),
-            ),
-        )
-            .into_response(),
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to create user");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({ "error": "Internal server error" })),
-            )
-                .into_response()
-        }
-    }
+    let user = state.create_user_use_case.execute(input).await?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(ApiResponse::success(UserResponse::from(user))),
+    ))
 }
 
 #[utoipa::path(
@@ -57,26 +47,22 @@ pub async fn create_user(
         ("id" = Uuid, Path, description = "User ID")
     ),
     responses(
-        (status = 200, description = "User found", body = UserResponse),
-        (status = 404, description = "User not found"),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "User found", body = crate::http::ApiResponseUser),
+        (status = 404, description = "User not found", body = crate::http::ApiErrorResponse),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
     )
 )]
-pub async fn get_user(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
-    match state.get_user_use_case.execute(id).await {
-        Ok(Some(user)) => (StatusCode::OK, Json(UserResponse::from(user))).into_response(),
-        Ok(None) => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "User not found" })),
-        )
-            .into_response(),
-        Err(e) => {
-            tracing::error!(error = %e, user_id = %id, "Failed to get user");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({ "error": "Internal server error" })),
-            )
-                .into_response()
-        }
+pub async fn get_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let user = state.get_user_use_case.execute(id).await?;
+
+    match user {
+        Some(user) => Ok((
+            StatusCode::OK,
+            Json(ApiResponse::success(UserResponse::from(user))),
+        )),
+        None => Err(AppError::NotFound(format!("User with ID {} not found", id))),
     }
 }
