@@ -1,29 +1,35 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 
 #[derive(Debug, Clone)]
 pub struct User {
     pub id: uuid::Uuid,
-    pub name: String,
+    pub first_name: String,
+    pub last_name: String,
     pub email: String,
     pub phone_number: Option<String>,
     pub password_hash: String,
+    pub birth_date: Option<NaiveDate>,
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
 impl User {
     pub fn new(
         id: uuid::Uuid,
-        name: String,
+        first_name: String,
+        last_name: String,
         email: String,
         phone_number: Option<String>,
         password_hash: String,
+        birth_date: Option<NaiveDate>,
     ) -> Self {
         Self {
             id,
-            name,
+            first_name,
+            last_name,
             email,
             phone_number,
             password_hash,
+            birth_date,
             deleted_at: None,
         }
     }

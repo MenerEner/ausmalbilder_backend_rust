@@ -8,6 +8,7 @@ edition = "2024"
 tracing = { version = "0.1.43", optional = true }
 domain-users = { path = "../domain-users" }
 uuid = { version = "1.11", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 bcrypt = "0.17"
 async-trait = "0.1"
 

@@ -6,10 +6,12 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub name: String,
+    pub first_name: String,
+    pub last_name: String,
     pub email: String,
     pub phone_number: Option<String>,
     pub password_hash: String,
+    pub birth_date: Option<Date>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

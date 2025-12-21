@@ -21,10 +21,12 @@ impl UserRepository for PostgresUserRepository {
     async fn create(&self, user: &User) -> Result<(), UserRepositoryError> {
         let active_model = UserActiveModel {
             id: Set(user.id),
-            name: Set(user.name.clone()),
+            first_name: Set(user.first_name.clone()),
+            last_name: Set(user.last_name.clone()),
             email: Set(user.email.clone()),
             phone_number: Set(user.phone_number.clone()),
             password_hash: Set(user.password_hash.clone()),
+            birth_date: Set(user.birth_date),
             deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
         };
 
@@ -48,10 +50,12 @@ impl UserRepository for PostgresUserRepository {
     async fn update(&self, user: &User) -> Result<(), UserRepositoryError> {
         let active_model = UserActiveModel {
             id: Set(user.id),
-            name: Set(user.name.clone()),
+            first_name: Set(user.first_name.clone()),
+            last_name: Set(user.last_name.clone()),
             email: Set(user.email.clone()),
             phone_number: Set(user.phone_number.clone()),
             password_hash: Set(user.password_hash.clone()),
+            birth_date: Set(user.birth_date),
             deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
         };
 

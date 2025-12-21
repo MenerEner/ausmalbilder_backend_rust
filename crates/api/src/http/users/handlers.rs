@@ -26,10 +26,12 @@ pub async fn create_user(
     Json(payload): Json<CreateUserRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let input = CreateUserInput {
-        name: payload.name,
+        first_name: payload.first_name,
+        last_name: payload.last_name,
         email: payload.email,
         phone_number: payload.phone_number,
         password: payload.password,
+        birth_date: payload.birth_date,
     };
 
     let user = state.create_user_use_case.execute(input).await?;

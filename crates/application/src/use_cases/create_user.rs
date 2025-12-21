@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use crate::ports::password_hasher::PasswordHasher;
 use crate::ports::user_repository::UserRepository;
 use domain_users::User;
@@ -40,10 +41,12 @@ impl CreateUserUseCase {
 
         let user = User::new(
             Uuid::new_v4(),
-            input.name,
+            input.first_name,
+            input.last_name,
             input.email,
             input.phone_number,
             password_hash,
+            input.birth_date,
         );
 
         self.user_repo.create(&user).await?;
@@ -54,10 +57,12 @@ impl CreateUserUseCase {
 
 #[derive(Clone)]
 pub struct CreateUserInput {
-    pub name: String,
+    pub first_name: String,
+    pub last_name: String,
     pub email: String,
     pub phone_number: Option<String>,
     pub password: String,
+    pub birth_date: Option<NaiveDate>,
 }
 
 #[derive(Debug)]
@@ -114,10 +119,12 @@ mod tests {
         async fn create(&self, user: &User) -> Result<(), UserRepositoryError> {
             self.users.lock().unwrap().push(User::new(
                 user.id,
-                user.name.clone(),
+                user.first_name.clone(),
+                user.last_name.clone(),
                 user.email.clone(),
                 user.phone_number.clone(),
                 user.password_hash.clone(),
+                user.birth_date,
             ));
             Ok(())
         }
@@ -126,10 +133,12 @@ mod tests {
             if let Some(u) = users.iter_mut().find(|u| u.id == user.id) {
                 *u = User {
                     id: user.id,
-                    name: user.name.clone(),
+                    first_name: user.first_name.clone(),
+                    last_name: user.last_name.clone(),
                     email: user.email.clone(),
                     phone_number: user.phone_number.clone(),
                     password_hash: user.password_hash.clone(),
+                    birth_date: user.birth_date,
                     deleted_at: user.deleted_at,
                 };
                 Ok(())
@@ -206,10 +215,12 @@ mod tests {
         let use_case = CreateUserUseCase::new(repo.clone(), hasher);
 
         let input = CreateUserInput {
-            name: "Test".to_string(),
+            first_name: "Test".to_string(),
+            last_name: "User".to_string(),
             email: "test@example.com".to_string(),
             phone_number: None,
             password: "password".to_string(),
+            birth_date: None,
         };
 
         // Create first user
