@@ -1,11 +1,11 @@
 use crate::http::ApiResponse;
 use crate::http::AppError;
 use crate::http::state::AppState;
-use crate::http::users::dtos::{CreateUserRequest, UserResponse};
-use application::use_cases::CreateUserInput;
+use crate::http::users::dtos::{CreateUserRequest, UserResponse, VerifyEmailRequest};
+use application::use_cases::{CreateUserInput, SignupInput};
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
 };
@@ -113,4 +113,59 @@ pub async fn delete_user(
     state.delete_user_use_case.execute(id).await?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/signup",
+    request_body = CreateUserRequest,
+    responses(
+        (status = 201, description = "User signed up successfully", body = crate::http::ApiResponseUser),
+        (status = 400, description = "Invalid request payload", body = crate::http::ApiErrorResponse),
+        (status = 409, description = "User already exists", body = crate::http::ApiErrorResponse),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
+    )
+)]
+pub async fn signup(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateUserRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    payload.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
+
+    let input = SignupInput {
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        email: payload.email,
+        phone_number: payload.phone_number,
+        password: payload.password,
+        birth_date: payload.birth_date,
+    };
+
+    let user = state.signup_use_case.execute(input).await?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(ApiResponse::success(UserResponse::from(user))),
+    ))
+}
+
+#[utoipa::path(
+    get,
+    path = "/auth/verify-email",
+    params(
+        ("token" = String, Query, description = "Verification token")
+    ),
+    responses(
+        (status = 200, description = "Email verified successfully"),
+        (status = 400, description = "Invalid token", body = crate::http::ApiErrorResponse),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
+    )
+)]
+pub async fn verify_email(
+    State(state): State<AppState>,
+    Query(payload): Query<VerifyEmailRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    state.verify_email_use_case.execute(&payload.token).await?;
+
+    Ok(StatusCode::OK)
 }

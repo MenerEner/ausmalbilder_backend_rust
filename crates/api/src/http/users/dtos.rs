@@ -26,6 +26,8 @@ pub struct UserResponse {
     pub email: String,
     pub phone_number: Option<String>,
     pub birth_date: Option<NaiveDate>,
+    pub is_email_verified: bool,
+    pub role: String,
 }
 
 impl From<domain_users::User> for UserResponse {
@@ -37,6 +39,13 @@ impl From<domain_users::User> for UserResponse {
             email: user.email,
             phone_number: user.phone_number,
             birth_date: user.birth_date,
+            is_email_verified: user.is_email_verified,
+            role: user.role.to_string(),
         }
     }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VerifyEmailRequest {
+    pub token: String,
 }

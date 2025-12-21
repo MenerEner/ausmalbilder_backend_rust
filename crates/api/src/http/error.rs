@@ -106,3 +106,42 @@ impl From<application::use_cases::ListUsersError> for AppError {
         }
     }
 }
+
+impl From<application::use_cases::SignupError> for AppError {
+    fn from(err: application::use_cases::SignupError) -> Self {
+        match err {
+            application::use_cases::SignupError::AlreadyExists(email) => {
+                Self::Conflict(format!("User with email {} already exists", email))
+            }
+            application::use_cases::SignupError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::SignupError::EmailError(msg) => {
+                tracing::error!(error = %msg, "Email error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::SignupError::InternalError(msg) => {
+                tracing::error!(error = %msg, "Internal error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}
+
+impl From<application::use_cases::VerifyEmailError> for AppError {
+    fn from(err: application::use_cases::VerifyEmailError) -> Self {
+        match err {
+            application::use_cases::VerifyEmailError::InvalidToken => {
+                Self::BadRequest("Invalid or expired token".to_string())
+            }
+            application::use_cases::VerifyEmailError::UserNotFound => {
+                Self::NotFound("User not found".to_string())
+            }
+            application::use_cases::VerifyEmailError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}

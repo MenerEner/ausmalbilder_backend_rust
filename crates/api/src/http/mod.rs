@@ -20,11 +20,14 @@ use utoipa_swagger_ui::SwaggerUi;
         users::handlers::get_user,
         users::handlers::list_users,
         users::handlers::delete_user,
+        users::handlers::signup,
+        users::handlers::verify_email,
     ),
     components(
         schemas(
             CreateUserRequest,
             UserResponse,
+            crate::http::users::dtos::VerifyEmailRequest,
             ApiResponseUser,
             ApiErrorResponse,
             ApiErrorDetail

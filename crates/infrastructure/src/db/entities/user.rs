@@ -12,6 +12,8 @@ pub struct Model {
     pub phone_number: Option<String>,
     pub password_hash: String,
     pub birth_date: Option<Date>,
+    pub is_email_verified: bool,
+    pub role: String,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

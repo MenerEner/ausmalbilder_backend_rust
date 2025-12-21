@@ -49,14 +49,25 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let user_repo = std::sync::Arc::new(infrastructure::db::repos::PostgresUserRepository::new(
         db.clone(),
     ));
+    let token_repo = std::sync::Arc::new(
+        infrastructure::db::repos::PostgresEmailVerificationTokenRepository::new(db.clone()),
+    );
     let password_hasher = std::sync::Arc::new(infrastructure::security::Argon2Hasher);
+    let email_service = std::sync::Arc::new(infrastructure::email::StubEmailService);
 
     // Initialize use cases
     let create_user_use_case =
-        application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher);
+        application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher.clone());
     let get_user_use_case = application::use_cases::GetUserUseCase::new(user_repo.clone());
     let delete_user_use_case = application::use_cases::DeleteUserUseCase::new(user_repo.clone());
-    let list_users_use_case = application::use_cases::ListUsersUseCase::new(user_repo);
+    let list_users_use_case = application::use_cases::ListUsersUseCase::new(user_repo.clone());
+    let signup_use_case = application::use_cases::SignupUseCase::new(
+        user_repo.clone(),
+        token_repo.clone(),
+        password_hasher,
+        email_service,
+    );
+    let verify_email_use_case = application::use_cases::VerifyEmailUseCase::new(user_repo, token_repo);
 
     let state = AppState::new(
         db,
@@ -64,6 +75,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         get_user_use_case,
         delete_user_use_case,
         list_users_use_case,
+        signup_use_case,
+        verify_email_use_case,
     );
     let app = http::router(state);
 

@@ -14,4 +14,6 @@ pub fn router() -> Router<AppState> {
             "/users/{id}",
             get(handlers::get_user).delete(handlers::delete_user),
         )
+        .route("/auth/signup", post(handlers::signup))
+        .route("/auth/verify-email", get(handlers::verify_email))
 }

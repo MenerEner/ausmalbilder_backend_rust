@@ -27,6 +27,8 @@ impl UserRepository for PostgresUserRepository {
             phone_number: Set(user.phone_number.clone()),
             password_hash: Set(user.password_hash.clone()),
             birth_date: Set(user.birth_date),
+            is_email_verified: Set(user.is_email_verified),
+            role: Set(user.role.to_string()),
             deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
         };
 
@@ -56,6 +58,8 @@ impl UserRepository for PostgresUserRepository {
             phone_number: Set(user.phone_number.clone()),
             password_hash: Set(user.password_hash.clone()),
             birth_date: Set(user.birth_date),
+            is_email_verified: Set(user.is_email_verified),
+            role: Set(user.role.to_string()),
             deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
         };
 

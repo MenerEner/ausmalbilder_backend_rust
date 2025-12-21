@@ -13,6 +13,8 @@ impl UserMapper {
             phone_number: db_user.phone_number,
             password_hash: db_user.password_hash,
             birth_date: db_user.birth_date,
+            is_email_verified: db_user.is_email_verified,
+            role: db_user.role.into(),
             deleted_at: db_user.deleted_at.map(|dt| dt.into()),
         }
     }
@@ -26,6 +28,8 @@ impl UserMapper {
             phone_number: domain_user.phone_number,
             password_hash: domain_user.password_hash,
             birth_date: domain_user.birth_date,
+            is_email_verified: domain_user.is_email_verified,
+            role: domain_user.role.to_string(),
             deleted_at: domain_user.deleted_at.map(|dt| dt.into()),
         }
     }

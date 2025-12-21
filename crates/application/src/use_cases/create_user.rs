@@ -117,30 +117,13 @@ mod tests {
     #[async_trait]
     impl UserRepository for MockUserRepository {
         async fn create(&self, user: &User) -> Result<(), UserRepositoryError> {
-            self.users.lock().unwrap().push(User::new(
-                user.id,
-                user.first_name.clone(),
-                user.last_name.clone(),
-                user.email.clone(),
-                user.phone_number.clone(),
-                user.password_hash.clone(),
-                user.birth_date,
-            ));
+            self.users.lock().unwrap().push(user.clone());
             Ok(())
         }
         async fn update(&self, user: &User) -> Result<(), UserRepositoryError> {
             let mut users = self.users.lock().unwrap();
             if let Some(u) = users.iter_mut().find(|u| u.id == user.id) {
-                *u = User {
-                    id: user.id,
-                    first_name: user.first_name.clone(),
-                    last_name: user.last_name.clone(),
-                    email: user.email.clone(),
-                    phone_number: user.phone_number.clone(),
-                    password_hash: user.password_hash.clone(),
-                    birth_date: user.birth_date,
-                    deleted_at: user.deleted_at,
-                };
+                *u = user.clone();
                 Ok(())
             } else {
                 Err(UserRepositoryError::NotFound(user.id.to_string()))
