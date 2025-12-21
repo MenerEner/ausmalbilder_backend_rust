@@ -169,6 +169,22 @@ mod tests {
         async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError> {
             Ok(self.users.lock().unwrap().iter().filter(|u| !u.is_deleted()).cloned().collect())
         }
+        async fn find_all_active_paginated(
+            &self,
+            page: u64,
+            page_size: u64,
+        ) -> Result<(Vec<User>, u64), UserRepositoryError> {
+            let users = self.users.lock().unwrap();
+            let active_users: Vec<User> = users.iter().filter(|u| !u.is_deleted()).cloned().collect();
+            let total = active_users.len() as u64;
+            let offset = (page * page_size) as usize;
+            let paged_users = active_users
+                .into_iter()
+                .skip(offset)
+                .take(page_size as usize)
+                .collect();
+            Ok((paged_users, total))
+        }
     }
 
     struct MockTokenRepository {

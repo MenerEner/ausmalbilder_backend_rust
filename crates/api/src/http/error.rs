@@ -1,3 +1,4 @@
+use crate::http::middleware::get_correlation_id;
 use axum::{
     Json,
     http::StatusCode,
@@ -8,8 +9,6 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ApiErrorResponse {
-    #[schema(example = false, default = false)]
-    pub success: bool,
     pub error: ApiErrorDetail,
 }
 
@@ -17,6 +16,8 @@ pub struct ApiErrorResponse {
 pub struct ApiErrorDetail {
     pub code: String,
     pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug)]
@@ -42,10 +43,10 @@ impl IntoResponse for AppError {
         };
 
         let body = Json(ApiErrorResponse {
-            success: false,
             error: ApiErrorDetail {
                 code: code.to_string(),
                 message,
+                correlation_id: get_correlation_id(),
             },
         });
 

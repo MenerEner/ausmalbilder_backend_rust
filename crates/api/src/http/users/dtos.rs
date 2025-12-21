@@ -49,3 +49,21 @@ impl From<domain_users::User> for UserResponse {
 pub struct VerifyEmailRequest {
     pub token: String,
 }
+
+#[derive(Debug, Deserialize, ToSchema, IntoParams, Validate)]
+pub struct PaginationParams {
+    #[validate(range(min = 0))]
+    pub page: Option<u64>,
+    #[validate(range(min = 1, max = 100))]
+    pub page_size: Option<u64>,
+}
+
+impl PaginationParams {
+    pub fn page(&self) -> u64 {
+        self.page.unwrap_or(0)
+    }
+
+    pub fn page_size(&self) -> u64 {
+        self.page_size.unwrap_or(20)
+    }
+}

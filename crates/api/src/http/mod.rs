@@ -1,14 +1,18 @@
 mod error;
 mod healthcheck;
+mod middleware;
 mod response;
 pub mod state;
 mod users;
 
 pub use error::{ApiErrorDetail, ApiErrorResponse, AppError};
-pub use response::{ApiResponse, ApiResponseUser};
+pub use response::{ApiResponse, ApiResponseUser, PaginatedResponse};
 
 use self::state::AppState;
-use crate::http::users::dtos::{CreateUserRequest, UserResponse, VerifyEmailRequest};
+use crate::http::healthcheck::HealthResponse;
+use crate::http::users::dtos::{
+    CreateUserRequest, PaginationParams, UserResponse, VerifyEmailRequest,
+};
 use axum::Router;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -16,6 +20,7 @@ use utoipa_swagger_ui::SwaggerUi;
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        healthcheck::health,
         users::handlers::create_user,
         users::handlers::get_user,
         users::handlers::list_users,
@@ -25,9 +30,11 @@ use utoipa_swagger_ui::SwaggerUi;
     ),
     components(
         schemas(
+            HealthResponse,
             CreateUserRequest,
             UserResponse,
             VerifyEmailRequest,
+            PaginationParams,
             ApiResponseUser,
             ApiErrorResponse,
             ApiErrorDetail
@@ -44,5 +51,8 @@ pub fn router(state: AppState) -> Router {
         .merge(healthcheck::router())
         .merge(users::router())
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .layer(axum::middleware::from_fn(
+            middleware::correlation_id_middleware,
+        ))
         .with_state(state)
 }

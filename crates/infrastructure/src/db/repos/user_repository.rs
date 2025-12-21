@@ -110,4 +110,29 @@ impl UserRepository for PostgresUserRepository {
 
         Ok(db_users.into_iter().map(UserMapper::to_domain).collect())
     }
+
+    async fn find_all_active_paginated(
+        &self,
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<User>, u64), UserRepositoryError> {
+        let paginator = UserEntity::find()
+            .filter(crate::db::entities::user::Column::DeletedAt.is_null())
+            .paginate(&self.db, page_size);
+
+        let total_items = paginator
+            .num_items()
+            .await
+            .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
+
+        let db_users = paginator
+            .fetch_page(page) // SeaORM uses 0-based indexing for pages
+            .await
+            .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
+
+        Ok((
+            db_users.into_iter().map(UserMapper::to_domain).collect(),
+            total_items,
+        ))
+    }
 }

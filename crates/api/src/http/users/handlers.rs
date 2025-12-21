@@ -1,12 +1,14 @@
-use crate::http::ApiResponse;
+use crate::http::{ApiResponse, PaginatedResponse};
 use crate::http::AppError;
 use crate::http::state::AppState;
-use crate::http::users::dtos::{CreateUserRequest, UserResponse, VerifyEmailRequest};
+use crate::http::users::dtos::{
+    CreateUserRequest, PaginationParams, UserResponse, VerifyEmailRequest,
+};
 use application::use_cases::{CreateUserInput, SignupInput};
 use axum::{
     Json,
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode, header},
     response::IntoResponse,
 };
 use uuid::Uuid;
@@ -41,8 +43,15 @@ pub async fn create_user(
 
     let user = state.create_user_use_case.execute(input).await?;
 
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::LOCATION,
+        format!("/users/{}", user.id).parse().unwrap(),
+    );
+
     Ok((
         StatusCode::CREATED,
+        headers,
         Json(ApiResponse::success(UserResponse::from(user))),
     ))
 }
@@ -79,21 +88,35 @@ pub async fn get_user(
     get,
     path = "/users",
     tag = "users",
+    params(
+        PaginationParams
+    ),
     responses(
-        (status = 200, description = "List of users", body = Vec<crate::http::ApiResponseUser>),
+        (status = 200, description = "List of users", body = PaginatedResponse<UserResponse>),
         (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
     )
 )]
 pub async fn list_users(
     State(state): State<AppState>,
+    Query(pagination): Query<PaginationParams>,
 ) -> Result<impl IntoResponse, AppError> {
-    let users = state.list_users_use_case.execute().await?;
+    pagination.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
 
-    let response: Vec<UserResponse> = users.into_iter().map(UserResponse::from).collect();
+    let (users, total) = state
+        .list_users_use_case
+        .execute(pagination.page(), pagination.page_size())
+        .await?;
+
+    let user_responses: Vec<UserResponse> = users.into_iter().map(UserResponse::from).collect();
 
     Ok((
         StatusCode::OK,
-        Json(ApiResponse::success(response)),
+        Json(PaginatedResponse::success(
+            user_responses,
+            pagination.page(),
+            pagination.page_size(),
+            total,
+        )),
     ))
 }
 
@@ -148,8 +171,15 @@ pub async fn signup(
 
     let user = state.signup_use_case.execute(input).await?;
 
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::LOCATION,
+        format!("/users/{}", user.id).parse().unwrap(),
+    );
+
     Ok((
         StatusCode::CREATED,
+        headers,
         Json(ApiResponse::success(UserResponse::from(user))),
     ))
 }

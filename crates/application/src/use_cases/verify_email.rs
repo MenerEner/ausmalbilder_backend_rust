@@ -115,6 +115,13 @@ mod tests {
         async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError> {
             unimplemented!()
         }
+        async fn find_all_active_paginated(
+            &self,
+            _page: u64,
+            _page_size: u64,
+        ) -> Result<(Vec<User>, u64), UserRepositoryError> {
+            unimplemented!()
+        }
     }
 
     struct MockTokenRepository {
