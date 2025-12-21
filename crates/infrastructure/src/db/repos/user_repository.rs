@@ -25,6 +25,7 @@ impl UserRepository for PostgresUserRepository {
             email: Set(user.email.clone()),
             phone_number: Set(user.phone_number.clone()),
             password_hash: Set(user.password_hash.clone()),
+            deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
         };
 
         UserEntity::insert(active_model)
@@ -44,6 +45,24 @@ impl UserRepository for PostgresUserRepository {
         Ok(())
     }
 
+    async fn update(&self, user: &User) -> Result<(), UserRepositoryError> {
+        let active_model = UserActiveModel {
+            id: Set(user.id),
+            name: Set(user.name.clone()),
+            email: Set(user.email.clone()),
+            phone_number: Set(user.phone_number.clone()),
+            password_hash: Set(user.password_hash.clone()),
+            deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
+        };
+
+        active_model
+            .update(&self.db)
+            .await
+            .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
+
+        Ok(())
+    }
+
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, UserRepositoryError> {
         let db_user = UserEntity::find_by_id(id)
             .one(&self.db)
@@ -56,6 +75,17 @@ impl UserRepository for PostgresUserRepository {
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError> {
         let db_user = UserEntity::find()
             .filter(crate::db::entities::user::Column::Email.eq(email))
+            .one(&self.db)
+            .await
+            .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
+
+        Ok(db_user.map(UserMapper::to_domain))
+    }
+
+    async fn find_active_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError> {
+        let db_user = UserEntity::find()
+            .filter(crate::db::entities::user::Column::Email.eq(email))
+            .filter(crate::db::entities::user::Column::DeletedAt.is_null())
             .one(&self.db)
             .await
             .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;

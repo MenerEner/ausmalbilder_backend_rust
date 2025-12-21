@@ -81,3 +81,17 @@ impl From<application::use_cases::GetUserError> for AppError {
         }
     }
 }
+
+impl From<application::use_cases::DeleteUserError> for AppError {
+    fn from(err: application::use_cases::DeleteUserError) -> Self {
+        match err {
+            application::use_cases::DeleteUserError::NotFound(id) => {
+                Self::NotFound(format!("User with ID {} not found", id))
+            }
+            application::use_cases::DeleteUserError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}

@@ -13,3 +13,6 @@ async-trait = "0.1"
 
 [features]
 tracing = ["dep:tracing"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

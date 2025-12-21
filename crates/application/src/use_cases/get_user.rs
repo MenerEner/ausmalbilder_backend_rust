@@ -28,6 +28,7 @@ impl From<UserRepositoryError> for GetUserError {
         match err {
             UserRepositoryError::DatabaseError(msg) => Self::RepositoryError(msg),
             UserRepositoryError::AlreadyExists(msg) => Self::RepositoryError(msg), // Should not happen for find_by_id
+            UserRepositoryError::NotFound(msg) => Self::RepositoryError(msg),
         }
     }
 }

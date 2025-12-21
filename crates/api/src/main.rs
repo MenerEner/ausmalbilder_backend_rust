@@ -54,9 +54,15 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Initialize use cases
     let create_user_use_case =
         application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher);
-    let get_user_use_case = application::use_cases::GetUserUseCase::new(user_repo);
+    let get_user_use_case = application::use_cases::GetUserUseCase::new(user_repo.clone());
+    let delete_user_use_case = application::use_cases::DeleteUserUseCase::new(user_repo);
 
-    let state = AppState::new(db, create_user_use_case, get_user_use_case);
+    let state = AppState::new(
+        db,
+        create_user_use_case,
+        get_user_use_case,
+        delete_user_use_case,
+    );
     let app = http::router(state);
 
     tracing::info!("starting api");

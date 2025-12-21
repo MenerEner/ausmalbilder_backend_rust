@@ -7,6 +7,7 @@ edition = "2024"
 tracing = { version = "0.1", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 uuid = { version = "1.11", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 [features]
 tracing = ["dep:tracing"]

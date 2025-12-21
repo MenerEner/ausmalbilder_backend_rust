@@ -11,6 +11,7 @@ impl UserMapper {
             email: db_user.email,
             phone_number: db_user.phone_number,
             password_hash: db_user.password_hash,
+            deleted_at: db_user.deleted_at.map(|dt| dt.into()),
         }
     }
 
@@ -21,6 +22,7 @@ impl UserMapper {
             email: domain_user.email,
             phone_number: domain_user.phone_number,
             password_hash: domain_user.password_hash,
+            deleted_at: domain_user.deleted_at.map(|dt| dt.into()),
         }
     }
 }

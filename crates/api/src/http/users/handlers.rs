@@ -66,3 +66,24 @@ pub async fn get_user(
         None => Err(AppError::NotFound(format!("User with ID {} not found", id))),
     }
 }
+
+#[utoipa::path(
+    delete,
+    path = "/users/{id}",
+    params(
+        ("id" = Uuid, Path, description = "User ID")
+    ),
+    responses(
+        (status = 204, description = "User deleted successfully"),
+        (status = 404, description = "User not found", body = crate::http::ApiErrorResponse),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
+    )
+)]
+pub async fn delete_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    state.delete_user_use_case.execute(id).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
