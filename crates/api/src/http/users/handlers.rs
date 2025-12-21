@@ -10,6 +10,7 @@ use axum::{
     response::IntoResponse,
 };
 use uuid::Uuid;
+use validator::Validate;
 
 #[utoipa::path(
     post,
@@ -17,6 +18,7 @@ use uuid::Uuid;
     request_body = CreateUserRequest,
     responses(
         (status = 201, description = "User created successfully", body = crate::http::ApiResponseUser),
+        (status = 400, description = "Invalid request payload", body = crate::http::ApiErrorResponse),
         (status = 409, description = "User already exists", body = crate::http::ApiErrorResponse),
         (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
     )
@@ -25,6 +27,8 @@ pub async fn create_user(
     State(state): State<AppState>,
     Json(payload): Json<CreateUserRequest>,
 ) -> Result<impl IntoResponse, AppError> {
+    payload.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
+
     let input = CreateUserInput {
         first_name: payload.first_name,
         last_name: payload.last_name,

@@ -2,13 +2,18 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
+use validator::Validate;
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema, Validate)]
 pub struct CreateUserRequest {
+    #[validate(length(min = 1))]
     pub first_name: String,
+    #[validate(length(min = 1))]
     pub last_name: String,
+    #[validate(email)]
     pub email: String,
     pub phone_number: Option<String>,
+    #[validate(length(min = 8))]
     pub password: String,
     pub birth_date: Option<NaiveDate>,
 }
