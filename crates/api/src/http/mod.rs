@@ -8,7 +8,7 @@ pub use error::{ApiErrorDetail, ApiErrorResponse, AppError};
 pub use response::{ApiResponse, ApiResponseUser};
 
 use self::state::AppState;
-use crate::http::users::dtos::{CreateUserRequest, UserResponse};
+use crate::http::users::dtos::{CreateUserRequest, UserResponse, VerifyEmailRequest};
 use axum::Router;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -27,7 +27,7 @@ use utoipa_swagger_ui::SwaggerUi;
         schemas(
             CreateUserRequest,
             UserResponse,
-            crate::http::users::dtos::VerifyEmailRequest,
+            VerifyEmailRequest,
             ApiResponseUser,
             ApiErrorResponse,
             ApiErrorDetail

@@ -15,6 +15,7 @@ use validator::Validate;
 #[utoipa::path(
     post,
     path = "/users",
+    tag = "users",
     request_body = CreateUserRequest,
     responses(
         (status = 201, description = "User created successfully", body = crate::http::ApiResponseUser),
@@ -49,6 +50,7 @@ pub async fn create_user(
 #[utoipa::path(
     get,
     path = "/users/{id}",
+    tag = "users",
     params(
         ("id" = Uuid, Path, description = "User ID")
     ),
@@ -76,6 +78,7 @@ pub async fn get_user(
 #[utoipa::path(
     get,
     path = "/users",
+    tag = "users",
     responses(
         (status = 200, description = "List of users", body = Vec<crate::http::ApiResponseUser>),
         (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
@@ -97,6 +100,7 @@ pub async fn list_users(
 #[utoipa::path(
     delete,
     path = "/users/{id}",
+    tag = "users",
     params(
         ("id" = Uuid, Path, description = "User ID")
     ),
@@ -118,6 +122,7 @@ pub async fn delete_user(
 #[utoipa::path(
     post,
     path = "/auth/signup",
+    tag = "users",
     request_body = CreateUserRequest,
     responses(
         (status = 201, description = "User signed up successfully", body = crate::http::ApiResponseUser),
@@ -152,8 +157,9 @@ pub async fn signup(
 #[utoipa::path(
     get,
     path = "/auth/verify-email",
+    tag = "users",
     params(
-        ("token" = String, Query, description = "Verification token")
+        VerifyEmailRequest
     ),
     responses(
         (status = 200, description = "Email verified successfully"),
