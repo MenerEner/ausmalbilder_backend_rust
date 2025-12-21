@@ -1,12 +1,12 @@
 mod healthcheck;
-mod users;
 pub mod state;
+mod users;
 
+use self::state::AppState;
+use crate::http::users::dtos::{CreateUserRequest, UserResponse};
 use axum::Router;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use self::state::AppState;
-use crate::http::users::dtos::{CreateUserRequest, UserResponse};
 
 #[derive(OpenApi)]
 #[openapi(

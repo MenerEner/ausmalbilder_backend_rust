@@ -1,8 +1,11 @@
 pub mod dtos;
 pub mod handlers;
 
-use axum::{routing::{get, post}, Router};
 use crate::http::state::AppState;
+use axum::{
+    Router,
+    routing::{get, post},
+};
 
 pub fn router() -> Router<AppState> {
     Router::new()

@@ -1,8 +1,8 @@
+use crate::config::database_settings::DatabaseSettings;
+use crate::config::logging_settings::LoggingSettings;
+use crate::config::server_settings::ServerSettings;
 use serde::Deserialize;
 use std::net::{IpAddr, SocketAddr};
-use crate::config::server_settings::ServerSettings;
-use crate::config::logging_settings::LoggingSettings;
-use crate::config::database_settings::DatabaseSettings;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
@@ -47,25 +47,26 @@ impl Settings {
         let mut settings: Settings = builder.build()?.try_deserialize()?;
 
         // Railway-friendly overrides
-        if let Ok(url) = std::env::var("DATABASE_URL") {
-            if !url.trim().is_empty() {
-                settings.database.url = url;
-            }
+        if let Some(url) = std::env::var("DATABASE_URL")
+            .ok()
+            .filter(|u| !u.trim().is_empty())
+        {
+            settings.database.url = url;
         }
-        if let Ok(port) = std::env::var("PORT") {
-            if let Ok(p) = port.parse::<u16>() {
-                settings.server.port = p;
-            }
+        if let Some(p) = std::env::var("PORT")
+            .ok()
+            .and_then(|p| p.parse::<u16>().ok())
+        {
+            settings.server.port = p;
         }
-        if let Ok(host) = std::env::var("HOST") {
-            if !host.trim().is_empty() {
-                settings.server.host = host;
-            }
+        if let Some(host) = std::env::var("HOST").ok().filter(|h| !h.trim().is_empty()) {
+            settings.server.host = host;
         }
-        if let Ok(fmt) = std::env::var("LOG_FORMAT") {
-            if !fmt.trim().is_empty() {
-                settings.logging.format = Some(fmt);
-            }
+        if let Some(fmt) = std::env::var("LOG_FORMAT")
+            .ok()
+            .filter(|f| !f.trim().is_empty())
+        {
+            settings.logging.format = Some(fmt);
         }
 
         Ok(settings)

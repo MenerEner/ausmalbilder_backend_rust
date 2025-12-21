@@ -1,3 +1,3 @@
-pub mod bcrypt_hasher;
+pub mod argon2_hasher;
 
-pub use bcrypt_hasher::BcryptHasher;
+pub use argon2_hasher::Argon2Hasher;

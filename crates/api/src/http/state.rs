@@ -1,6 +1,6 @@
+use application::use_cases::{CreateUserUseCase, GetUserUseCase};
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
-use application::use_cases::{CreateUserUseCase, GetUserUseCase};
 
 #[derive(Clone)]
 pub struct AppState {

@@ -25,9 +25,13 @@ impl CreateUserUseCase {
             return Err(CreateUserError::AlreadyExists(input.email));
         }
 
-        let password_hash = self.password_hasher.hash(&input.password).await.map_err(|e| {
-            CreateUserError::InternalError(format!("Failed to hash password: {}", e))
-        })?;
+        let password_hash = self
+            .password_hasher
+            .hash(&input.password)
+            .await
+            .map_err(|e| {
+                CreateUserError::InternalError(format!("Failed to hash password: {}", e))
+            })?;
 
         let user = User::new(
             Uuid::new_v4(),

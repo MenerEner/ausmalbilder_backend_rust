@@ -1,5 +1,5 @@
-pub mod telemetry;
 pub mod models;
+pub mod telemetry;
 
 pub use models::User;
 

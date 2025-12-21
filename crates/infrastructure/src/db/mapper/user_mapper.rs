@@ -1,5 +1,5 @@
-use domain_users::models::user::User as DomainUser;
 use crate::db::entities::user::Model as DbUser;
+use domain_users::models::user::User as DomainUser;
 
 pub struct UserMapper;
 

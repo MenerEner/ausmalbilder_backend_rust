@@ -1,7 +1,12 @@
-use axum::{extract::{State, Path}, Json, http::StatusCode, response::IntoResponse};
 use crate::http::state::AppState;
 use crate::http::users::dtos::{CreateUserRequest, UserResponse};
 use application::use_cases::CreateUserInput;
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
+};
 use uuid::Uuid;
 
 #[utoipa::path(
@@ -27,12 +32,20 @@ pub async fn create_user(
 
     match state.create_user_use_case.execute(input).await {
         Ok(user) => (StatusCode::CREATED, Json(UserResponse::from(user))).into_response(),
-        Err(application::use_cases::CreateUserError::AlreadyExists(email)) => {
-            (StatusCode::CONFLICT, Json(serde_json::json!({ "error": format!("User with email {} already exists", email) }))).into_response()
-        }
+        Err(application::use_cases::CreateUserError::AlreadyExists(email)) => (
+            StatusCode::CONFLICT,
+            Json(
+                serde_json::json!({ "error": format!("User with email {} already exists", email) }),
+            ),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!(error = %e, "Failed to create user");
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal server error" }))).into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal server error" })),
+            )
+                .into_response()
         }
     }
 }
@@ -49,16 +62,21 @@ pub async fn create_user(
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn get_user(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+pub async fn get_user(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match state.get_user_use_case.execute(id).await {
         Ok(Some(user)) => (StatusCode::OK, Json(UserResponse::from(user))).into_response(),
-        Ok(None) => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "User not found" }))).into_response(),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "User not found" })),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!(error = %e, user_id = %id, "Failed to get user");
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal server error" }))).into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal server error" })),
+            )
+                .into_response()
         }
     }
 }

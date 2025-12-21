@@ -1,7 +1,7 @@
-use std::process::ExitCode;
-use tracing_subscriber::{fmt, EnvFilter};
-use shared::config::Settings;
 use crate::http::state::AppState;
+use shared::config::Settings;
+use std::process::ExitCode;
+use tracing_subscriber::{EnvFilter, fmt};
 
 mod http;
 
@@ -27,15 +27,13 @@ fn init_tracing() {
 }
 
 fn init_settings() -> Settings {
-    let settings = match Settings::load() {
+    match Settings::load() {
         Ok(settings) => settings,
         Err(err) => {
             eprintln!("error loading config: {err}");
             std::process::exit(1);
         }
-    };
-
-    settings
+    }
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -48,11 +46,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let db = infrastructure::db::init_db(&settings.database).await?;
 
     // Initialize dependencies
-    let user_repo = std::sync::Arc::new(infrastructure::db::repos::PostgresUserRepository::new(db.clone()));
-    let password_hasher = std::sync::Arc::new(infrastructure::security::BcryptHasher);
+    let user_repo = std::sync::Arc::new(infrastructure::db::repos::PostgresUserRepository::new(
+        db.clone(),
+    ));
+    let password_hasher = std::sync::Arc::new(infrastructure::security::Argon2Hasher);
 
     // Initialize use cases
-    let create_user_use_case = application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher);
+    let create_user_use_case =
+        application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher);
     let get_user_use_case = application::use_cases::GetUserUseCase::new(user_repo);
 
     let state = AppState::new(db, create_user_use_case, get_user_use_case);

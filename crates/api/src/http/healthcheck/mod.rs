@@ -1,8 +1,8 @@
-use axum::{extract::State, Json, Router};
-use axum::routing::get;
-use serde::Serialize;
 use crate::http::state::AppState;
+use axum::routing::get;
+use axum::{Json, Router, extract::State};
 use sea_orm::ConnectionTrait;
+use serde::Serialize;
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -11,7 +11,14 @@ struct HealthResponse {
 }
 
 async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
-    let db_status = match state.db.execute(sea_orm::Statement::from_string(state.db.get_database_backend(), "SELECT 1")).await {
+    let db_status = match state
+        .db
+        .execute(sea_orm::Statement::from_string(
+            state.db.get_database_backend(),
+            "SELECT 1",
+        ))
+        .await
+    {
         Ok(_) => "up",
         Err(_) => "down",
     };
@@ -23,5 +30,5 @@ async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
 }
 
 pub fn router() -> Router<AppState> {
-   Router::new().route("/health", get(health))
+    Router::new().route("/health", get(health))
 }

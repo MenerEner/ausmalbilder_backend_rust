@@ -1,4 +1,4 @@
-use crate::db::entities::user::{Entity as UserEntity, ActiveModel as UserActiveModel};
+use crate::db::entities::user::{ActiveModel as UserActiveModel, Entity as UserEntity};
 use crate::db::mapper::UserMapper;
 use application::ports::user_repository::{UserRepository, UserRepositoryError};
 use async_trait::async_trait;
@@ -32,7 +32,9 @@ impl UserRepository for PostgresUserRepository {
             .await
             .map_err(|e| {
                 let err_msg = e.to_string();
-                if err_msg.contains("duplicate key value") || err_msg.contains("UNIQUE constraint failed") {
+                if err_msg.contains("duplicate key value")
+                    || err_msg.contains("UNIQUE constraint failed")
+                {
                     UserRepositoryError::AlreadyExists(user.email.clone())
                 } else {
                     UserRepositoryError::DatabaseError(err_msg)
