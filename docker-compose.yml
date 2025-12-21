@@ -14,7 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   pgadmin:
-    image: dpage/pgadmin4:8.14
+    image: dpage/pgadmin4:9
     container_name: ausmalbilder_pgadmin
     restart: always
     environment:
