@@ -45,7 +45,7 @@ impl From<domain_users::User> for UserResponse {
     }
 }
 
-#[derive(Debug, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct VerifyEmailRequest {
     pub token: String,
 }
