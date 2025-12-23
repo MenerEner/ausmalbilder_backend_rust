@@ -13,9 +13,6 @@ tokio::task_local! {
     pub static CORRELATION_ID: String;
 }
 
-#[derive(Clone, Debug)]
-pub struct CorrelationId(pub String);
-
 pub fn get_correlation_id() -> Option<String> {
     CORRELATION_ID.try_with(|id| id.clone()).ok()
 }
@@ -30,12 +27,12 @@ pub async fn correlation_id_middleware(mut request: Request<Body>, next: Next) -
         .map(|s| s.to_string())
         .unwrap_or_else(|| Uuid::new_v4().to_string());
 
-    let val = HeaderValue::from_str(&correlation_id).unwrap_or_else(|_| {
-        HeaderValue::from_static("invalid-correlation-id")
-    });
+    let val = HeaderValue::from_str(&correlation_id)
+        .unwrap_or_else(|_| HeaderValue::from_static("invalid-correlation-id"));
 
-    request.headers_mut().insert(header_name.clone(), val.clone());
-    request.extensions_mut().insert(CorrelationId(correlation_id.clone()));
+    request
+        .headers_mut()
+        .insert(header_name.clone(), val.clone());
 
     let span = tracing::info_span!(
         "http_request",
