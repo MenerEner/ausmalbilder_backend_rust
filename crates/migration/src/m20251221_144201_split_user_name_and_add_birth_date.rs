@@ -10,8 +10,18 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(User::Table)
-                    .add_column(ColumnDef::new(Alias::new("first_name")).string().not_null().default(""))
-                    .add_column(ColumnDef::new(Alias::new("last_name")).string().not_null().default(""))
+                    .add_column(
+                        ColumnDef::new(Alias::new("first_name"))
+                            .string()
+                            .not_null()
+                            .default(""),
+                    )
+                    .add_column(
+                        ColumnDef::new(Alias::new("last_name"))
+                            .string()
+                            .not_null()
+                            .default(""),
+                    )
                     .add_column(ColumnDef::new(Alias::new("birth_date")).date())
                     .to_owned(),
             )
@@ -19,7 +29,7 @@ impl MigrationTrait for Migration {
 
         // migrate data if needed (assuming name is "First Last")
         // but for simplicity and since it's a new feature, we might just drop the name column
-        
+
         manager
             .alter_table(
                 Table::alter()

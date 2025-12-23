@@ -45,7 +45,10 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-email_verification_token-user_id")
-                            .from(EmailVerificationToken::Table, EmailVerificationToken::UserId)
+                            .from(
+                                EmailVerificationToken::Table,
+                                EmailVerificationToken::UserId,
+                            )
                             .to(User::Table, User::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )

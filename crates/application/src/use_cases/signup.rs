@@ -158,16 +158,44 @@ mod tests {
             }
         }
         async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, UserRepositoryError> {
-            Ok(self.users.lock().unwrap().iter().find(|u| u.id == id).cloned())
+            Ok(self
+                .users
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|u| u.id == id)
+                .cloned())
         }
         async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError> {
-            Ok(self.users.lock().unwrap().iter().find(|u| u.email == email).cloned())
+            Ok(self
+                .users
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|u| u.email == email)
+                .cloned())
         }
-        async fn find_active_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError> {
-            Ok(self.users.lock().unwrap().iter().find(|u| u.email == email && !u.is_deleted()).cloned())
+        async fn find_active_by_email(
+            &self,
+            email: &str,
+        ) -> Result<Option<User>, UserRepositoryError> {
+            Ok(self
+                .users
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|u| u.email == email && !u.is_deleted())
+                .cloned())
         }
         async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError> {
-            Ok(self.users.lock().unwrap().iter().filter(|u| !u.is_deleted()).cloned().collect())
+            Ok(self
+                .users
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|u| !u.is_deleted())
+                .cloned()
+                .collect())
         }
         async fn find_all_active_paginated(
             &self,
@@ -175,7 +203,8 @@ mod tests {
             page_size: u64,
         ) -> Result<(Vec<User>, u64), UserRepositoryError> {
             let users = self.users.lock().unwrap();
-            let active_users: Vec<User> = users.iter().filter(|u| !u.is_deleted()).cloned().collect();
+            let active_users: Vec<User> =
+                users.iter().filter(|u| !u.is_deleted()).cloned().collect();
             let total = active_users.len() as u64;
             let offset = (page * page_size) as usize;
             let paged_users = active_users
@@ -197,8 +226,17 @@ mod tests {
             self.tokens.lock().unwrap().push(token.clone());
             Ok(())
         }
-        async fn find_by_token(&self, token: &str) -> Result<Option<EmailVerificationToken>, TokenRepositoryError> {
-            Ok(self.tokens.lock().unwrap().iter().find(|t| t.token == token).cloned())
+        async fn find_by_token(
+            &self,
+            token: &str,
+        ) -> Result<Option<EmailVerificationToken>, TokenRepositoryError> {
+            Ok(self
+                .tokens
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|t| t.token == token)
+                .cloned())
         }
         async fn delete_by_token(&self, token: &str) -> Result<(), TokenRepositoryError> {
             let mut tokens = self.tokens.lock().unwrap();
@@ -228,11 +266,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_signup_success() {
-        let user_repo = Arc::new(MockUserRepository { users: Mutex::new(vec![]) });
-        let token_repo = Arc::new(MockTokenRepository { tokens: Mutex::new(vec![]) });
+        let user_repo = Arc::new(MockUserRepository {
+            users: Mutex::new(vec![]),
+        });
+        let token_repo = Arc::new(MockTokenRepository {
+            tokens: Mutex::new(vec![]),
+        });
         let hasher = Arc::new(MockPasswordHasher);
         let email_service = Arc::new(MockEmailService);
-        let use_case = SignupUseCase::new(user_repo.clone(), token_repo.clone(), hasher, email_service);
+        let use_case =
+            SignupUseCase::new(user_repo.clone(), token_repo.clone(), hasher, email_service);
 
         let input = SignupInput {
             first_name: "John".to_string(),

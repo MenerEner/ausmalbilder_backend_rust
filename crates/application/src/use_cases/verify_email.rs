@@ -54,7 +54,9 @@ impl From<crate::ports::user_repository::UserRepositoryError> for VerifyEmailErr
     }
 }
 
-impl From<crate::ports::email_verification_token_repository::TokenRepositoryError> for VerifyEmailError {
+impl From<crate::ports::email_verification_token_repository::TokenRepositoryError>
+    for VerifyEmailError
+{
     fn from(err: crate::ports::email_verification_token_repository::TokenRepositoryError) -> Self {
         VerifyEmailError::RepositoryError(err.to_string())
     }
@@ -104,12 +106,21 @@ mod tests {
             }
         }
         async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, UserRepositoryError> {
-            Ok(self.users.lock().unwrap().iter().find(|u| u.id == id).cloned())
+            Ok(self
+                .users
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|u| u.id == id)
+                .cloned())
         }
         async fn find_by_email(&self, _email: &str) -> Result<Option<User>, UserRepositoryError> {
             unimplemented!()
         }
-        async fn find_active_by_email(&self, _email: &str) -> Result<Option<User>, UserRepositoryError> {
+        async fn find_active_by_email(
+            &self,
+            _email: &str,
+        ) -> Result<Option<User>, UserRepositoryError> {
             unimplemented!()
         }
         async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError> {
@@ -134,8 +145,17 @@ mod tests {
             self.tokens.lock().unwrap().push(token.clone());
             Ok(())
         }
-        async fn find_by_token(&self, token: &str) -> Result<Option<EmailVerificationToken>, TokenRepositoryError> {
-            Ok(self.tokens.lock().unwrap().iter().find(|t| t.token == token).cloned())
+        async fn find_by_token(
+            &self,
+            token: &str,
+        ) -> Result<Option<EmailVerificationToken>, TokenRepositoryError> {
+            Ok(self
+                .tokens
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|t| t.token == token)
+                .cloned())
         }
         async fn delete_by_token(&self, token: &str) -> Result<(), TokenRepositoryError> {
             let mut tokens = self.tokens.lock().unwrap();
@@ -157,16 +177,26 @@ mod tests {
             None,
         );
 
-        let user_repo = Arc::new(MockUserRepository { users: Mutex::new(vec![user]) });
-        let token = EmailVerificationToken { token: "token123".to_string(), user_id };
-        let token_repo = Arc::new(MockTokenRepository { tokens: Mutex::new(vec![token]) });
+        let user_repo = Arc::new(MockUserRepository {
+            users: Mutex::new(vec![user]),
+        });
+        let token = EmailVerificationToken {
+            token: "token123".to_string(),
+            user_id,
+        };
+        let token_repo = Arc::new(MockTokenRepository {
+            tokens: Mutex::new(vec![token]),
+        });
         let use_case = VerifyEmailUseCase::new(user_repo.clone(), token_repo.clone());
 
         use_case.execute("token123").await.unwrap();
 
         let updated_user = user_repo.find_by_id(user_id).await.unwrap().unwrap();
         assert!(updated_user.is_email_verified);
-        assert_eq!(updated_user.role, domain_users::models::user::UserRole::VerifiedUser);
+        assert_eq!(
+            updated_user.role,
+            domain_users::models::user::UserRole::VerifiedUser
+        );
 
         let tokens = token_repo.tokens.lock().unwrap();
         assert!(tokens.is_empty());

@@ -6,7 +6,11 @@ pub struct StubEmailService;
 #[async_trait]
 impl EmailService for StubEmailService {
     async fn send_verification_email(&self, to: &str, token: &str) -> Result<(), EmailError> {
-        tracing::info!("Stub: Sending verification email to {} with token {}", to, token);
+        tracing::info!(
+            "Stub: Sending verification email to {} with token {}",
+            to,
+            token
+        );
         Ok(())
     }
 }

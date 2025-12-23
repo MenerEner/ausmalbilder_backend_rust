@@ -1,6 +1,6 @@
-use chrono::NaiveDate;
 use crate::ports::password_hasher::PasswordHasher;
 use crate::ports::user_repository::UserRepository;
+use chrono::NaiveDate;
 use domain_users::User;
 use std::sync::Arc;
 use uuid::Uuid;
