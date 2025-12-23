@@ -37,10 +37,11 @@ fn init_settings() -> Settings {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    println!("Staring application");
     init_tracing();
+    tracing::info!("Starting application");
     let settings: Settings = init_settings();
-    tracing::info!(?settings, "configuration loaded");
+    tracing::info!(env = %settings.env, server_host = %settings.server.host, server_port = %settings.server.port, "configuration loaded");
+    tracing::debug!(?settings, "detailed configuration");
 
     tracing::info!("initializing database");
     let db = infrastructure::db::init_db(&settings.database).await?;
@@ -67,7 +68,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         password_hasher,
         email_service,
     );
-    let verify_email_use_case = application::use_cases::VerifyEmailUseCase::new(user_repo, token_repo);
+    let verify_email_use_case =
+        application::use_cases::VerifyEmailUseCase::new(user_repo, token_repo);
 
     let state = AppState::new(
         db,
