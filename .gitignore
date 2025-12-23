@@ -2,3 +2,4 @@
 /crates/**/target
 .idea/
 Cargo.lock
+/.junie/guidelines.md
