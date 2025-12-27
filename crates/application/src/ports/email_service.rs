@@ -2,7 +2,13 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait EmailService: Send + Sync {
-    async fn send_verification_email(&self, to: &str, token: &str) -> Result<(), EmailError>;
+    async fn send_verification_email(
+        &self,
+        to: &str,
+        token: &str,
+        first_name: &str,
+        last_name: &str,
+    ) -> Result<(), EmailError>;
 }
 
 #[derive(Debug)]

@@ -54,7 +54,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         infrastructure::db::repos::PostgresEmailVerificationTokenRepository::new(db.clone()),
     );
     let password_hasher = std::sync::Arc::new(infrastructure::security::Argon2Hasher);
-    let email_service = std::sync::Arc::new(infrastructure::email::StubEmailService);
+    let email_service: std::sync::Arc<dyn application::ports::email_service::EmailService> =
+        std::sync::Arc::new(infrastructure::email::MailtrapEmailService::new(
+            settings.mailtrap.clone(),
+        ));
 
     // Initialize use cases
     let create_user_use_case =

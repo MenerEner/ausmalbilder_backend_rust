@@ -69,7 +69,7 @@ impl SignupUseCase {
         self.token_repo.create(&token).await?;
 
         self.email_service
-            .send_verification_email(&input.email, &token_str)
+            .send_verification_email(&input.email, &token_str, &user.first_name, &user.last_name)
             .await?;
 
         Ok(user)
@@ -259,7 +259,13 @@ mod tests {
     struct MockEmailService;
     #[async_trait]
     impl EmailService for MockEmailService {
-        async fn send_verification_email(&self, _to: &str, _token: &str) -> Result<(), EmailError> {
+        async fn send_verification_email(
+            &self,
+            _to: &str,
+            _token: &str,
+            _first_name: &str,
+            _last_name: &str,
+        ) -> Result<(), EmailError> {
             Ok(())
         }
     }

@@ -1,3 +1,3 @@
-pub mod stub_email_service;
+pub mod mailtrap_email_service;
 
-pub use stub_email_service::StubEmailService;
+pub use mailtrap_email_service::MailtrapEmailService;
