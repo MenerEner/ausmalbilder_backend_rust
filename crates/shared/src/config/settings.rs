@@ -1,5 +1,7 @@
+use crate::config::auth_settings::AuthSettings;
 use crate::config::database_settings::DatabaseSettings;
 use crate::config::logging_settings::LoggingSettings;
+use crate::config::mailtrap_settings::MailtrapSettings;
 use crate::config::server_settings::ServerSettings;
 use serde::Deserialize;
 use std::net::{IpAddr, SocketAddr};
@@ -17,6 +19,12 @@ pub struct Settings {
 
     #[serde(default)]
     pub database: DatabaseSettings,
+
+    #[serde(default)]
+    pub mailtrap: MailtrapSettings,
+
+    #[serde(default)]
+    pub auth: AuthSettings,
 }
 
 impl Default for Settings {
@@ -26,6 +34,8 @@ impl Default for Settings {
             server: ServerSettings::default(),
             logging: LoggingSettings::default(),
             database: DatabaseSettings::default(),
+            mailtrap: MailtrapSettings::default(),
+            auth: AuthSettings::default(),
         }
     }
 }
@@ -67,6 +77,20 @@ impl Settings {
             .filter(|f| !f.trim().is_empty())
         {
             settings.logging.format = Some(fmt);
+        }
+
+        if let Some(token) = std::env::var("MAILTRAP_API_TOKEN")
+            .ok()
+            .filter(|t| !t.trim().is_empty())
+        {
+            settings.mailtrap.api_token = token;
+        }
+
+        if let Some(base_url) = std::env::var("MAILTRAP_VERIFICATION_BASE_URL")
+            .ok()
+            .filter(|u| !u.trim().is_empty())
+        {
+            settings.mailtrap.verification_base_url = base_url;
         }
 
         Ok(settings)

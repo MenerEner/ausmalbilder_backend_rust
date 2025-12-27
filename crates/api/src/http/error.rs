@@ -1,3 +1,4 @@
+use crate::http::middleware::get_correlation_id;
 use axum::{
     Json,
     http::StatusCode,
@@ -8,8 +9,6 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ApiErrorResponse {
-    #[schema(example = false, default = false)]
-    pub success: bool,
     pub error: ApiErrorDetail,
 }
 
@@ -17,6 +16,8 @@ pub struct ApiErrorResponse {
 pub struct ApiErrorDetail {
     pub code: String,
     pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug)]
@@ -42,10 +43,10 @@ impl IntoResponse for AppError {
         };
 
         let body = Json(ApiErrorResponse {
-            success: false,
             error: ApiErrorDetail {
                 code: code.to_string(),
                 message,
+                correlation_id: get_correlation_id(),
             },
         });
 
@@ -101,6 +102,87 @@ impl From<application::use_cases::ListUsersError> for AppError {
         match err {
             application::use_cases::ListUsersError::RepositoryError(msg) => {
                 tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}
+
+impl From<application::use_cases::SignupError> for AppError {
+    fn from(err: application::use_cases::SignupError) -> Self {
+        match err {
+            application::use_cases::SignupError::AlreadyExists(email) => {
+                Self::Conflict(format!("User with email {} already exists", email))
+            }
+            application::use_cases::SignupError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::SignupError::EmailError(msg) => {
+                tracing::error!(error = %msg, "Email error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::SignupError::InternalError(msg) => {
+                tracing::error!(error = %msg, "Internal error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}
+
+impl From<application::use_cases::VerifyEmailError> for AppError {
+    fn from(err: application::use_cases::VerifyEmailError) -> Self {
+        match err {
+            application::use_cases::VerifyEmailError::InvalidToken => {
+                Self::BadRequest("Invalid or expired token".to_string())
+            }
+            application::use_cases::VerifyEmailError::UserNotFound => {
+                Self::NotFound("User not found".to_string())
+            }
+            application::use_cases::VerifyEmailError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}
+
+impl From<application::use_cases::RequestPasswordResetError> for AppError {
+    fn from(err: application::use_cases::RequestPasswordResetError) -> Self {
+        match err {
+            application::use_cases::RequestPasswordResetError::UserNotFound => {
+                Self::NotFound("User not found".to_string())
+            }
+            application::use_cases::RequestPasswordResetError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::RequestPasswordResetError::EmailError(msg) => {
+                tracing::error!(error = %msg, "Email error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}
+
+impl From<application::use_cases::ResetPasswordError> for AppError {
+    fn from(err: application::use_cases::ResetPasswordError) -> Self {
+        match err {
+            application::use_cases::ResetPasswordError::InvalidToken => {
+                Self::BadRequest("Invalid token".to_string())
+            }
+            application::use_cases::ResetPasswordError::ExpiredToken => {
+                Self::BadRequest("Expired token".to_string())
+            }
+            application::use_cases::ResetPasswordError::UserNotFound => {
+                Self::NotFound("User not found".to_string())
+            }
+            application::use_cases::ResetPasswordError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::ResetPasswordError::InternalError(msg) => {
+                tracing::error!(error = %msg, "Internal error");
                 Self::Internal("Internal server error".to_string())
             }
         }

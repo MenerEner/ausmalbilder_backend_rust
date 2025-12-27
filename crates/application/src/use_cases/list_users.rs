@@ -11,9 +11,16 @@ impl ListUsersUseCase {
         Self { user_repo }
     }
 
-    pub async fn execute(&self) -> Result<Vec<User>, ListUsersError> {
-        let users = self.user_repo.find_all_active().await?;
-        Ok(users)
+    pub async fn execute(
+        &self,
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<User>, u64), ListUsersError> {
+        let (users, total) = self
+            .user_repo
+            .find_all_active_paginated(page, page_size)
+            .await?;
+        Ok((users, total))
     }
 }
 

@@ -6,3 +6,15 @@ server:
 
 database:
   url: postgres://user:password@localhost:5432/ausmalbilder
+
+mailtrap:
+  api_token: "828884dbb70d54425918c71d6a0ce516"
+  sender_email: "hello@bendyk.com"
+  sender_name: "mein-aumalbild.de"
+  verification_template_uuid: "fb2a7961-7820-4627-a15f-844eb32185d2"
+  verification_base_url: "http://localhost:3030/user/mailverfication.html"
+  password_reset_template_uuid: "23b0bba6-f54e-45fa-85a5-f219c89df3e0"
+  password_reset_base_url: "http://localhost:3030/user/reset-password.html"
+
+auth:
+  password_reset_token_expiry_hours: 24

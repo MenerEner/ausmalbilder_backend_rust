@@ -10,6 +10,11 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError>;
     async fn find_active_by_email(&self, email: &str) -> Result<Option<User>, UserRepositoryError>;
     async fn find_all_active(&self) -> Result<Vec<User>, UserRepositoryError>;
+    async fn find_all_active_paginated(
+        &self,
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<User>, u64), UserRepositoryError>;
 }
 
 #[derive(Debug)]

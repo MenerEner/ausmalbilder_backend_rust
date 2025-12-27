@@ -21,10 +21,14 @@ impl UserRepository for PostgresUserRepository {
     async fn create(&self, user: &User) -> Result<(), UserRepositoryError> {
         let active_model = UserActiveModel {
             id: Set(user.id),
-            name: Set(user.name.clone()),
+            first_name: Set(user.first_name.clone()),
+            last_name: Set(user.last_name.clone()),
             email: Set(user.email.clone()),
             phone_number: Set(user.phone_number.clone()),
             password_hash: Set(user.password_hash.clone()),
+            birth_date: Set(user.birth_date),
+            is_email_verified: Set(user.is_email_verified),
+            role: Set(user.role.to_string()),
             deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
         };
 
@@ -48,10 +52,14 @@ impl UserRepository for PostgresUserRepository {
     async fn update(&self, user: &User) -> Result<(), UserRepositoryError> {
         let active_model = UserActiveModel {
             id: Set(user.id),
-            name: Set(user.name.clone()),
+            first_name: Set(user.first_name.clone()),
+            last_name: Set(user.last_name.clone()),
             email: Set(user.email.clone()),
             phone_number: Set(user.phone_number.clone()),
             password_hash: Set(user.password_hash.clone()),
+            birth_date: Set(user.birth_date),
+            is_email_verified: Set(user.is_email_verified),
+            role: Set(user.role.to_string()),
             deleted_at: Set(user.deleted_at.map(|dt| dt.into())),
         };
 
@@ -101,5 +109,30 @@ impl UserRepository for PostgresUserRepository {
             .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
 
         Ok(db_users.into_iter().map(UserMapper::to_domain).collect())
+    }
+
+    async fn find_all_active_paginated(
+        &self,
+        page: u64,
+        page_size: u64,
+    ) -> Result<(Vec<User>, u64), UserRepositoryError> {
+        let paginator = UserEntity::find()
+            .filter(crate::db::entities::user::Column::DeletedAt.is_null())
+            .paginate(&self.db, page_size);
+
+        let total_items = paginator
+            .num_items()
+            .await
+            .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
+
+        let db_users = paginator
+            .fetch_page(page) // SeaORM uses 0-based indexing for pages
+            .await
+            .map_err(|e| UserRepositoryError::DatabaseError(e.to_string()))?;
+
+        Ok((
+            db_users.into_iter().map(UserMapper::to_domain).collect(),
+            total_items,
+        ))
     }
 }

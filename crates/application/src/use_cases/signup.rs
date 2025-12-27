@@ -1,3 +1,8 @@
+use crate::ports::TokenRepositoryError;
+use crate::ports::email_service::EmailService;
+use crate::ports::email_verification_token_repository::{
+    EmailVerificationToken, EmailVerificationTokenRepository,
+};
 use crate::ports::password_hasher::PasswordHasher;
 use crate::ports::user_repository::UserRepository;
 use chrono::NaiveDate;
@@ -5,45 +10,49 @@ use domain_users::User;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub struct CreateUserUseCase {
+pub struct SignupUseCase {
     user_repo: Arc<dyn UserRepository>,
+    token_repo: Arc<dyn EmailVerificationTokenRepository>,
     password_hasher: Arc<dyn PasswordHasher>,
+    email_service: Arc<dyn EmailService>,
 }
 
-impl CreateUserUseCase {
+impl SignupUseCase {
     pub fn new(
         user_repo: Arc<dyn UserRepository>,
+        token_repo: Arc<dyn EmailVerificationTokenRepository>,
         password_hasher: Arc<dyn PasswordHasher>,
+        email_service: Arc<dyn EmailService>,
     ) -> Self {
         Self {
             user_repo,
+            token_repo,
             password_hasher,
+            email_service,
         }
     }
 
-    pub async fn execute(&self, input: CreateUserInput) -> Result<User, CreateUserError> {
+    pub async fn execute(&self, input: SignupInput) -> Result<User, SignupError> {
         if self
             .user_repo
             .find_active_by_email(&input.email)
             .await?
             .is_some()
         {
-            return Err(CreateUserError::AlreadyExists(input.email));
+            return Err(SignupError::AlreadyExists(input.email));
         }
 
         let password_hash = self
             .password_hasher
             .hash(&input.password)
             .await
-            .map_err(|e| {
-                CreateUserError::InternalError(format!("Failed to hash password: {}", e))
-            })?;
+            .map_err(|e| SignupError::InternalError(format!("Failed to hash password: {}", e)))?;
 
         let user = User::new(
             Uuid::new_v4(),
             input.first_name,
             input.last_name,
-            input.email,
+            input.email.clone(),
             input.phone_number,
             password_hash,
             input.birth_date,
@@ -51,12 +60,24 @@ impl CreateUserUseCase {
 
         self.user_repo.create(&user).await?;
 
+        // Generate token (for simplicity using UUID, can be more complex)
+        let token_str = Uuid::new_v4().to_string();
+        let token = EmailVerificationToken {
+            token: token_str.clone(),
+            user_id: user.id,
+        };
+
+        self.token_repo.create(&token).await?;
+
+        self.email_service
+            .send_verification_email(&input.email, &token_str, &user.first_name, &user.last_name)
+            .await?;
+
         Ok(user)
     }
 }
 
-#[derive(Clone)]
-pub struct CreateUserInput {
+pub struct SignupInput {
     pub first_name: String,
     pub last_name: String,
     pub email: String,
@@ -66,44 +87,53 @@ pub struct CreateUserInput {
 }
 
 #[derive(Debug)]
-pub enum CreateUserError {
+pub enum SignupError {
     AlreadyExists(String),
     RepositoryError(String),
+    EmailError(String),
     InternalError(String),
 }
 
-impl From<crate::ports::user_repository::UserRepositoryError> for CreateUserError {
+impl From<crate::ports::user_repository::UserRepositoryError> for SignupError {
     fn from(err: crate::ports::user_repository::UserRepositoryError) -> Self {
-        match err {
-            crate::ports::user_repository::UserRepositoryError::AlreadyExists(email) => {
-                Self::AlreadyExists(email)
-            }
-            crate::ports::user_repository::UserRepositoryError::DatabaseError(msg) => {
-                Self::RepositoryError(msg)
-            }
-            crate::ports::user_repository::UserRepositoryError::NotFound(msg) => {
-                Self::RepositoryError(msg)
-            }
-        }
+        SignupError::RepositoryError(err.to_string())
     }
 }
 
-impl std::fmt::Display for CreateUserError {
+impl From<TokenRepositoryError> for SignupError {
+    fn from(err: TokenRepositoryError) -> Self {
+        SignupError::RepositoryError(err.to_string())
+    }
+}
+
+impl From<crate::ports::email_service::EmailError> for SignupError {
+    fn from(err: crate::ports::email_service::EmailError) -> Self {
+        SignupError::EmailError(err.to_string())
+    }
+}
+
+impl std::fmt::Display for SignupError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::AlreadyExists(email) => write!(f, "User with email {} already exists", email),
             Self::RepositoryError(msg) => write!(f, "Repository error: {}", msg),
+            Self::EmailError(msg) => write!(f, "Email error: {}", msg),
             Self::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }
     }
 }
 
-impl std::error::Error for CreateUserError {}
+impl std::error::Error for SignupError {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ports::password_hasher::PasswordHasher;
+    use crate::ports::TokenRepositoryError;
+    use crate::ports::email_service::{EmailError, EmailService};
+    use crate::ports::email_verification_token_repository::{
+        EmailVerificationToken, EmailVerificationTokenRepository,
+    };
+    use crate::ports::password_hasher::{PasswordHasher, PasswordHasherError};
     use crate::ports::user_repository::{UserRepository, UserRepositoryError};
     use async_trait::async_trait;
     use domain_users::User;
@@ -188,54 +218,99 @@ mod tests {
         }
     }
 
+    struct MockTokenRepository {
+        tokens: Mutex<Vec<EmailVerificationToken>>,
+    }
+
+    #[async_trait]
+    impl EmailVerificationTokenRepository for MockTokenRepository {
+        async fn create(&self, token: &EmailVerificationToken) -> Result<(), TokenRepositoryError> {
+            self.tokens.lock().unwrap().push(token.clone());
+            Ok(())
+        }
+        async fn find_by_token(
+            &self,
+            token: &str,
+        ) -> Result<Option<EmailVerificationToken>, TokenRepositoryError> {
+            Ok(self
+                .tokens
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|t| t.token == token)
+                .cloned())
+        }
+        async fn delete_by_token(&self, token: &str) -> Result<(), TokenRepositoryError> {
+            let mut tokens = self.tokens.lock().unwrap();
+            tokens.retain(|t| t.token != token);
+            Ok(())
+        }
+    }
+
     struct MockPasswordHasher;
     #[async_trait]
     impl PasswordHasher for MockPasswordHasher {
-        async fn hash(
-            &self,
-            password: &str,
-        ) -> Result<String, crate::ports::password_hasher::PasswordHasherError> {
+        async fn hash(&self, password: &str) -> Result<String, PasswordHasherError> {
             Ok(password.to_string())
         }
-        async fn verify(
-            &self,
-            _password: &str,
-            _hash: &str,
-        ) -> Result<bool, crate::ports::password_hasher::PasswordHasherError> {
+        async fn verify(&self, _password: &str, _hash: &str) -> Result<bool, PasswordHasherError> {
             Ok(true)
         }
     }
 
+    struct MockEmailService;
+    #[async_trait]
+    impl EmailService for MockEmailService {
+        async fn send_verification_email(
+            &self,
+            _to: &str,
+            _token: &str,
+            _first_name: &str,
+            _last_name: &str,
+        ) -> Result<(), EmailError> {
+            Ok(())
+        }
+
+        async fn send_password_reset_email(
+            &self,
+            _to: &str,
+            _token: &str,
+            _first_name: &str,
+        ) -> Result<(), EmailError> {
+            Ok(())
+        }
+    }
+
     #[tokio::test]
-    async fn test_create_user_after_soft_delete() {
-        let repo = Arc::new(MockUserRepository {
+    async fn test_signup_success() {
+        let user_repo = Arc::new(MockUserRepository {
             users: Mutex::new(vec![]),
         });
+        let token_repo = Arc::new(MockTokenRepository {
+            tokens: Mutex::new(vec![]),
+        });
         let hasher = Arc::new(MockPasswordHasher);
-        let use_case = CreateUserUseCase::new(repo.clone(), hasher);
+        let email_service = Arc::new(MockEmailService);
+        let use_case =
+            SignupUseCase::new(user_repo.clone(), token_repo.clone(), hasher, email_service);
 
-        let input = CreateUserInput {
-            first_name: "Test".to_string(),
-            last_name: "User".to_string(),
-            email: "test@example.com".to_string(),
+        let input = SignupInput {
+            first_name: "John".to_string(),
+            last_name: "Doe".to_string(),
+            email: "john@example.com".to_string(),
             phone_number: None,
-            password: "password".to_string(),
+            password: "password123".to_string(),
             birth_date: None,
         };
 
-        // Create first user
-        let user1 = use_case.execute(input.clone()).await.unwrap();
+        let user = use_case.execute(input).await.unwrap();
 
-        // Soft delete first user
-        let mut user1_deleted = user1.clone();
-        user1_deleted.delete();
-        repo.update(&user1_deleted).await.unwrap();
+        assert_eq!(user.email, "john@example.com");
+        assert!(!user.is_email_verified);
+        assert_eq!(user.role, domain_users::models::user::UserRole::User);
 
-        // Create second user with same email
-        let user2 = use_case.execute(input).await.unwrap();
-
-        assert_ne!(user1.id, user2.id);
-        assert_eq!(user1.email, user2.email);
-        assert!(!user2.is_deleted());
+        let tokens = token_repo.tokens.lock().unwrap();
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].user_id, user.id);
     }
 }

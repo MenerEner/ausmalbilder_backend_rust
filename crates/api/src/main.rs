@@ -37,10 +37,11 @@ fn init_settings() -> Settings {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    println!("Staring application");
     init_tracing();
+    tracing::info!("Starting application");
     let settings: Settings = init_settings();
-    tracing::info!(?settings, "configuration loaded");
+    tracing::info!(env = %settings.env, server_host = %settings.server.host, server_port = %settings.server.port, "configuration loaded");
+    tracing::debug!(?settings, "detailed configuration");
 
     tracing::info!("initializing database");
     let db = infrastructure::db::init_db(&settings.database).await?;
@@ -49,14 +50,43 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let user_repo = std::sync::Arc::new(infrastructure::db::repos::PostgresUserRepository::new(
         db.clone(),
     ));
+    let token_repo = std::sync::Arc::new(
+        infrastructure::db::repos::PostgresEmailVerificationTokenRepository::new(db.clone()),
+    );
+    let password_reset_token_repo = std::sync::Arc::new(
+        infrastructure::db::repos::PostgresPasswordResetTokenRepository::new(db.clone()),
+    );
     let password_hasher = std::sync::Arc::new(infrastructure::security::Argon2Hasher);
+    let email_service: std::sync::Arc<dyn application::ports::email_service::EmailService> =
+        std::sync::Arc::new(infrastructure::email::MailtrapEmailService::new(
+            settings.mailtrap.clone(),
+        ));
 
     // Initialize use cases
     let create_user_use_case =
-        application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher);
+        application::use_cases::CreateUserUseCase::new(user_repo.clone(), password_hasher.clone());
     let get_user_use_case = application::use_cases::GetUserUseCase::new(user_repo.clone());
     let delete_user_use_case = application::use_cases::DeleteUserUseCase::new(user_repo.clone());
-    let list_users_use_case = application::use_cases::ListUsersUseCase::new(user_repo);
+    let list_users_use_case = application::use_cases::ListUsersUseCase::new(user_repo.clone());
+    let signup_use_case = application::use_cases::SignupUseCase::new(
+        user_repo.clone(),
+        token_repo.clone(),
+        password_hasher.clone(),
+        email_service.clone(),
+    );
+    let verify_email_use_case =
+        application::use_cases::VerifyEmailUseCase::new(user_repo.clone(), token_repo);
+    let request_password_reset_use_case = application::use_cases::RequestPasswordResetUseCase::new(
+        user_repo.clone(),
+        password_reset_token_repo.clone(),
+        email_service,
+    );
+    let reset_password_use_case = application::use_cases::ResetPasswordUseCase::new(
+        user_repo.clone(),
+        password_reset_token_repo,
+        password_hasher.clone(),
+        settings.auth.password_reset_token_expiry_hours,
+    );
 
     let state = AppState::new(
         db,
@@ -64,6 +94,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         get_user_use_case,
         delete_user_use_case,
         list_users_use_case,
+        signup_use_case,
+        verify_email_use_case,
+        request_password_reset_use_case,
+        reset_password_use_case,
     );
     let app = http::router(state);
 

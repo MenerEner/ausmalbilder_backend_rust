@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 serde = { version = "1.0.228", features = ["derive"] }
 config = { version = "0.15.19", default-features = false, features = ["yaml"] }
+url = "2.5.4"

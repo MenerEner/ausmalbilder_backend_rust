@@ -12,6 +12,14 @@ pub struct HealthResponse {
     database: &'static str,
 }
 
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "health",
+    responses(
+        (status = 200, description = "Health check", body = ApiResponse<HealthResponse>)
+    )
+)]
 async fn health(State(state): State<AppState>) -> Json<ApiResponse<HealthResponse>> {
     let db_status = match state
         .db
