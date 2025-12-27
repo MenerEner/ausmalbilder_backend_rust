@@ -1,0 +1,219 @@
+    Checking api v0.1.0 (/Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/api)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.69s
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/request_password_reset.rs:1:
++use crate::ports::TokenRepositoryError;
+ use crate::ports::email_service::EmailService;
+ use crate::ports::password_reset_token_repository::{
+     PasswordResetToken, PasswordResetTokenRepository,
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/request_password_reset.rs:4:
+ };
+ use crate::ports::user_repository::UserRepository;
+-use crate::ports::TokenRepositoryError;
+ use std::sync::Arc;
+ use uuid::Uuid;
+
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/request_password_reset.rs:94:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++    use crate::ports::TokenRepositoryError;
+     use crate::ports::email_service::{EmailError, EmailService};
+     use crate::ports::password_reset_token_repository::{
+         PasswordResetToken, PasswordResetTokenRepository,
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/request_password_reset.rs:100:
+     };
+     use crate::ports::user_repository::{UserRepository, UserRepositoryError};
+-    use crate::ports::TokenRepositoryError;
+     use async_trait::async_trait;
+     use domain_users::User;
+     use std::sync::Mutex;
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/request_password_reset.rs:195:
+             token: &str,
+             first_name: &str,
+         ) -> Result<(), EmailError> {
+-            self.sent_emails
+-                .lock()
+-                .unwrap()
+-                .push((to.to_string(), token.to_string(), first_name.to_string()));
++            self.sent_emails.lock().unwrap().push((
++                to.to_string(),
++                token.to_string(),
++                first_name.to_string(),
++            ));
+             Ok(())
+         }
+     }
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/request_password_reset.rs:260:
+         let use_case = RequestPasswordResetUseCase::new(user_repo, token_repo, email_service);
+
+         let result = use_case.execute("nonexistent@example.com").await;
+-        assert!(matches!(result, Err(RequestPasswordResetError::UserNotFound)));
++        assert!(matches!(
++            result,
++            Err(RequestPasswordResetError::UserNotFound)
++        ));
+     }
+ }
+
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/reset_password.rs:1:
++use crate::ports::TokenRepositoryError;
+ use crate::ports::password_hasher::PasswordHasher;
+ use crate::ports::password_reset_token_repository::PasswordResetTokenRepository;
+ use crate::ports::user_repository::UserRepository;
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/reset_password.rs:4:
+-use crate::ports::TokenRepositoryError;
+ use std::sync::Arc;
+
+ pub struct ResetPasswordUseCase {
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/reset_password.rs:51:
+             .await?
+             .ok_or(ResetPasswordError::UserNotFound)?;
+
+-        let password_hash = self
+-            .password_hasher
+-            .hash(new_password)
+-            .await
+-            .map_err(|e| ResetPasswordError::InternalError(format!("Failed to hash password: {}", e)))?;
++        let password_hash = self.password_hasher.hash(new_password).await.map_err(|e| {
++            ResetPasswordError::InternalError(format!("Failed to hash password: {}", e))
++        })?;
+
+         user.password_hash = password_hash;
+
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/reset_password.rs:104:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++    use crate::ports::TokenRepositoryError;
+     use crate::ports::password_hasher::{PasswordHasher, PasswordHasherError};
+     use crate::ports::password_reset_token_repository::{
+         PasswordResetToken, PasswordResetTokenRepository,
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/reset_password.rs:110:
+     };
+     use crate::ports::user_repository::{UserRepository, UserRepositoryError};
+-    use crate::ports::TokenRepositoryError;
+     use async_trait::async_trait;
+     use domain_users::User;
+     use std::sync::Mutex;
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/signup.rs:1:
++use crate::ports::TokenRepositoryError;
+ use crate::ports::email_service::EmailService;
+ use crate::ports::email_verification_token_repository::{
+     EmailVerificationToken, EmailVerificationTokenRepository,
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/signup.rs:4:
+ };
+ use crate::ports::password_hasher::PasswordHasher;
+ use crate::ports::user_repository::UserRepository;
+-use crate::ports::TokenRepositoryError;
+ use chrono::NaiveDate;
+ use domain_users::User;
+ use std::sync::Arc;
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/signup.rs:128:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++    use crate::ports::TokenRepositoryError;
+     use crate::ports::email_service::{EmailError, EmailService};
+     use crate::ports::email_verification_token_repository::{
+         EmailVerificationToken, EmailVerificationTokenRepository,
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/signup.rs:134:
+     };
+     use crate::ports::password_hasher::{PasswordHasher, PasswordHasherError};
+     use crate::ports::user_repository::{UserRepository, UserRepositoryError};
+-    use crate::ports::TokenRepositoryError;
+     use async_trait::async_trait;
+     use domain_users::User;
+     use std::sync::Mutex;
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/verify_email.rs:1:
++use crate::ports::TokenRepositoryError;
+ use crate::ports::email_verification_token_repository::EmailVerificationTokenRepository;
+ use crate::ports::user_repository::UserRepository;
+-use crate::ports::TokenRepositoryError;
+ use std::sync::Arc;
+
+ pub struct VerifyEmailUseCase {
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/verify_email.rs:76:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++    use crate::ports::TokenRepositoryError;
+     use crate::ports::email_verification_token_repository::{
+         EmailVerificationToken, EmailVerificationTokenRepository,
+     };
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/application/src/use_cases/verify_email.rs:82:
+     use crate::ports::user_repository::{UserRepository, UserRepositoryError};
+-    use crate::ports::TokenRepositoryError;
+     use async_trait::async_trait;
+     use domain_users::User;
+     use std::sync::Mutex;
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/infrastructure/src/db/repos/email_verification_token_repository.rs:1:
+ use crate::db::entities::email_verification_token::{ActiveModel, Entity as TokenEntity};
++use application::ports::TokenRepositoryError;
+ use application::ports::email_verification_token_repository::{
+     EmailVerificationToken, EmailVerificationTokenRepository,
+ };
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/infrastructure/src/db/repos/email_verification_token_repository.rs:5:
+-use application::ports::TokenRepositoryError;
+ use async_trait::async_trait;
+ use sea_orm::*;
+
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/infrastructure/src/db/repos/password_reset_token_repository.rs:1:
+ use crate::db::entities::password_reset_token::{ActiveModel, Column, Entity as TokenEntity};
++use application::ports::TokenRepositoryError;
+ use application::ports::password_reset_token_repository::{
+     PasswordResetToken, PasswordResetTokenRepository,
+ };
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/infrastructure/src/db/repos/password_reset_token_repository.rs:5:
+-use application::ports::TokenRepositoryError;
+ use async_trait::async_trait;
+ use sea_orm::*;
+ use uuid::Uuid;
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/infrastructure/src/email/mailtrap_email_service.rs:103:
+         let mut template_variables = HashMap::new();
+         template_variables.insert("first_name".to_string(), first_name.to_string());
+
+-        let password_reset_link = format!("{}?token={}", self.settings.password_reset_base_url, token);
++        let password_reset_link =
++            format!("{}?token={}", self.settings.password_reset_base_url, token);
+         template_variables.insert("password_reset_link".to_string(), password_reset_link);
+
+         let request_body = MailtrapSendRequest {
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/migration/src/m20251227_000001_create_password_reset_token_table.rs:31:
+                             .not_null()
+                             .primary_key(),
+                     )
++                    .col(ColumnDef::new(PasswordResetToken::UserId).uuid().not_null())
+                     .col(
+-                        ColumnDef::new(PasswordResetToken::UserId)
+-                            .uuid()
+-                            .not_null(),
+-                    )
+-                    .col(
+                         ColumnDef::new(PasswordResetToken::CreatedAt)
+                             .timestamp_with_time_zone()
+                             .not_null()
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/migration/src/m20251227_000001_create_password_reset_token_table.rs:45:
+                     .foreign_key(
+                         ForeignKey::create()
+                             .name("fk-password_reset_token-user_id")
+-                            .from(
+-                                PasswordResetToken::Table,
+-                                PasswordResetToken::UserId,
+-                            )
++                            .from(PasswordResetToken::Table, PasswordResetToken::UserId)
+                             .to(User::Table, User::Id)
+                             .on_delete(ForeignKeyAction::Cascade),
+                     )
+Diff in /Users/menerener/workspace-fuck-off-money/ausmalbilder/crates/migration/src/m20251227_000001_create_password_reset_token_table.rs:59:
+
+     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+         manager
+-            .drop_table(
+-                Table::drop()
+-                    .table(PasswordResetToken::Table)
+-                    .to_owned(),
+-            )
++            .drop_table(Table::drop().table(PasswordResetToken::Table).to_owned())
+             .await
+     }
+ }

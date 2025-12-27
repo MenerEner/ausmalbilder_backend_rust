@@ -1,3 +1,4 @@
+use crate::ports::TokenRepositoryError;
 use async_trait::async_trait;
 use uuid::Uuid;
 
@@ -16,18 +17,3 @@ pub trait EmailVerificationTokenRepository: Send + Sync {
     ) -> Result<Option<EmailVerificationToken>, TokenRepositoryError>;
     async fn delete_by_token(&self, token: &str) -> Result<(), TokenRepositoryError>;
 }
-
-#[derive(Debug)]
-pub enum TokenRepositoryError {
-    DatabaseError(String),
-}
-
-impl std::fmt::Display for TokenRepositoryError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::DatabaseError(msg) => write!(f, "Database error: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for TokenRepositoryError {}

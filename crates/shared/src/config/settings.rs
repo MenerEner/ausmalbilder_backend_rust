@@ -1,3 +1,4 @@
+use crate::config::auth_settings::AuthSettings;
 use crate::config::database_settings::DatabaseSettings;
 use crate::config::logging_settings::LoggingSettings;
 use crate::config::mailtrap_settings::MailtrapSettings;
@@ -21,6 +22,9 @@ pub struct Settings {
 
     #[serde(default)]
     pub mailtrap: MailtrapSettings,
+
+    #[serde(default)]
+    pub auth: AuthSettings,
 }
 
 impl Default for Settings {
@@ -31,6 +35,7 @@ impl Default for Settings {
             logging: LoggingSettings::default(),
             database: DatabaseSettings::default(),
             mailtrap: MailtrapSettings::default(),
+            auth: AuthSettings::default(),
         }
     }
 }

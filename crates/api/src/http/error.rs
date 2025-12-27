@@ -146,3 +146,45 @@ impl From<application::use_cases::VerifyEmailError> for AppError {
         }
     }
 }
+
+impl From<application::use_cases::RequestPasswordResetError> for AppError {
+    fn from(err: application::use_cases::RequestPasswordResetError) -> Self {
+        match err {
+            application::use_cases::RequestPasswordResetError::UserNotFound => {
+                Self::NotFound("User not found".to_string())
+            }
+            application::use_cases::RequestPasswordResetError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::RequestPasswordResetError::EmailError(msg) => {
+                tracing::error!(error = %msg, "Email error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}
+
+impl From<application::use_cases::ResetPasswordError> for AppError {
+    fn from(err: application::use_cases::ResetPasswordError) -> Self {
+        match err {
+            application::use_cases::ResetPasswordError::InvalidToken => {
+                Self::BadRequest("Invalid token".to_string())
+            }
+            application::use_cases::ResetPasswordError::ExpiredToken => {
+                Self::BadRequest("Expired token".to_string())
+            }
+            application::use_cases::ResetPasswordError::UserNotFound => {
+                Self::NotFound("User not found".to_string())
+            }
+            application::use_cases::ResetPasswordError::RepositoryError(msg) => {
+                tracing::error!(error = %msg, "Repository error");
+                Self::Internal("Internal server error".to_string())
+            }
+            application::use_cases::ResetPasswordError::InternalError(msg) => {
+                tracing::error!(error = %msg, "Internal error");
+                Self::Internal("Internal server error".to_string())
+            }
+        }
+    }
+}

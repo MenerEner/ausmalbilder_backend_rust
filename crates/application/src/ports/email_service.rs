@@ -9,6 +9,13 @@ pub trait EmailService: Send + Sync {
         first_name: &str,
         last_name: &str,
     ) -> Result<(), EmailError>;
+
+    async fn send_password_reset_email(
+        &self,
+        to: &str,
+        token: &str,
+        first_name: &str,
+    ) -> Result<(), EmailError>;
 }
 
 #[derive(Debug)]

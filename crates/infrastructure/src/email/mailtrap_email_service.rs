@@ -93,4 +93,55 @@ impl EmailService for MailtrapEmailService {
 
         Ok(())
     }
+
+    async fn send_password_reset_email(
+        &self,
+        to: &str,
+        token: &str,
+        first_name: &str,
+    ) -> Result<(), EmailError> {
+        let mut template_variables = HashMap::new();
+        template_variables.insert("first_name".to_string(), first_name.to_string());
+
+        let password_reset_link =
+            format!("{}?token={}", self.settings.password_reset_base_url, token);
+        template_variables.insert("password_reset_link".to_string(), password_reset_link);
+
+        let request_body = MailtrapSendRequest {
+            from: MailtrapSender {
+                email: self.settings.sender_email.clone(),
+                name: self.settings.sender_name.clone(),
+            },
+            to: vec![MailtrapRecipient {
+                email: to.to_string(),
+            }],
+            template_uuid: self.settings.password_reset_template_uuid.clone(),
+            template_variables,
+        };
+
+        let response = self
+            .client
+            .post("https://send.api.mailtrap.io/api/send")
+            .header(
+                "Authorization",
+                format!("Bearer {}", self.settings.api_token),
+            )
+            .json(&request_body)
+            .send()
+            .await
+            .map_err(|e| EmailError::SendError(e.to_string()))?;
+
+        if !response.status().is_success() {
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(EmailError::SendError(format!(
+                "Mailtrap API returned error: {}",
+                error_text
+            )));
+        }
+
+        Ok(())
+    }
 }

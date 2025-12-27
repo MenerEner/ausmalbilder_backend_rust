@@ -53,6 +53,9 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let token_repo = std::sync::Arc::new(
         infrastructure::db::repos::PostgresEmailVerificationTokenRepository::new(db.clone()),
     );
+    let password_reset_token_repo = std::sync::Arc::new(
+        infrastructure::db::repos::PostgresPasswordResetTokenRepository::new(db.clone()),
+    );
     let password_hasher = std::sync::Arc::new(infrastructure::security::Argon2Hasher);
     let email_service: std::sync::Arc<dyn application::ports::email_service::EmailService> =
         std::sync::Arc::new(infrastructure::email::MailtrapEmailService::new(
@@ -68,11 +71,22 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let signup_use_case = application::use_cases::SignupUseCase::new(
         user_repo.clone(),
         token_repo.clone(),
-        password_hasher,
-        email_service,
+        password_hasher.clone(),
+        email_service.clone(),
     );
     let verify_email_use_case =
-        application::use_cases::VerifyEmailUseCase::new(user_repo, token_repo);
+        application::use_cases::VerifyEmailUseCase::new(user_repo.clone(), token_repo);
+    let request_password_reset_use_case = application::use_cases::RequestPasswordResetUseCase::new(
+        user_repo.clone(),
+        password_reset_token_repo.clone(),
+        email_service,
+    );
+    let reset_password_use_case = application::use_cases::ResetPasswordUseCase::new(
+        user_repo.clone(),
+        password_reset_token_repo,
+        password_hasher.clone(),
+        settings.auth.password_reset_token_expiry_hours,
+    );
 
     let state = AppState::new(
         db,
@@ -82,6 +96,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         list_users_use_case,
         signup_use_case,
         verify_email_use_case,
+        request_password_reset_use_case,
+        reset_password_use_case,
     );
     let app = http::router(state);
 

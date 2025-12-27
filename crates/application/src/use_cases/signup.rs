@@ -1,3 +1,4 @@
+use crate::ports::TokenRepositoryError;
 use crate::ports::email_service::EmailService;
 use crate::ports::email_verification_token_repository::{
     EmailVerificationToken, EmailVerificationTokenRepository,
@@ -99,8 +100,8 @@ impl From<crate::ports::user_repository::UserRepositoryError> for SignupError {
     }
 }
 
-impl From<crate::ports::email_verification_token_repository::TokenRepositoryError> for SignupError {
-    fn from(err: crate::ports::email_verification_token_repository::TokenRepositoryError) -> Self {
+impl From<TokenRepositoryError> for SignupError {
+    fn from(err: TokenRepositoryError) -> Self {
         SignupError::RepositoryError(err.to_string())
     }
 }
@@ -127,9 +128,10 @@ impl std::error::Error for SignupError {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ports::TokenRepositoryError;
     use crate::ports::email_service::{EmailError, EmailService};
     use crate::ports::email_verification_token_repository::{
-        EmailVerificationToken, EmailVerificationTokenRepository, TokenRepositoryError,
+        EmailVerificationToken, EmailVerificationTokenRepository,
     };
     use crate::ports::password_hasher::{PasswordHasher, PasswordHasherError};
     use crate::ports::user_repository::{UserRepository, UserRepositoryError};
@@ -265,6 +267,15 @@ mod tests {
             _token: &str,
             _first_name: &str,
             _last_name: &str,
+        ) -> Result<(), EmailError> {
+            Ok(())
+        }
+
+        async fn send_password_reset_email(
+            &self,
+            _to: &str,
+            _token: &str,
+            _first_name: &str,
         ) -> Result<(), EmailError> {
             Ok(())
         }

@@ -50,6 +50,19 @@ pub struct VerifyEmailRequest {
     pub token: String,
 }
 
+#[derive(Debug, Deserialize, ToSchema, Validate)]
+pub struct ForgotPasswordRequest {
+    #[validate(email)]
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema, Validate)]
+pub struct ResetPasswordRequest {
+    pub token: String,
+    #[validate(length(min = 8))]
+    pub new_password: String,
+}
+
 #[derive(Debug, Deserialize, ToSchema, IntoParams, Validate)]
 pub struct PaginationParams {
     #[validate(range(min = 0))]

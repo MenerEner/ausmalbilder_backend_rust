@@ -1,3 +1,4 @@
+use crate::ports::TokenRepositoryError;
 use crate::ports::email_verification_token_repository::EmailVerificationTokenRepository;
 use crate::ports::user_repository::UserRepository;
 use std::sync::Arc;
@@ -54,10 +55,8 @@ impl From<crate::ports::user_repository::UserRepositoryError> for VerifyEmailErr
     }
 }
 
-impl From<crate::ports::email_verification_token_repository::TokenRepositoryError>
-    for VerifyEmailError
-{
-    fn from(err: crate::ports::email_verification_token_repository::TokenRepositoryError) -> Self {
+impl From<TokenRepositoryError> for VerifyEmailError {
+    fn from(err: TokenRepositoryError) -> Self {
         VerifyEmailError::RepositoryError(err.to_string())
     }
 }
@@ -77,8 +76,9 @@ impl std::error::Error for VerifyEmailError {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ports::TokenRepositoryError;
     use crate::ports::email_verification_token_repository::{
-        EmailVerificationToken, EmailVerificationTokenRepository, TokenRepositoryError,
+        EmailVerificationToken, EmailVerificationTokenRepository,
     };
     use crate::ports::user_repository::{UserRepository, UserRepositoryError};
     use async_trait::async_trait;

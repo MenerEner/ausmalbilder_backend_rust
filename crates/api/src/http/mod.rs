@@ -11,7 +11,8 @@ pub use response::{ApiResponse, ApiResponseUser, PaginatedResponse};
 use self::state::AppState;
 use crate::http::healthcheck::HealthResponse;
 use crate::http::users::dtos::{
-    CreateUserRequest, PaginationParams, UserResponse, VerifyEmailRequest,
+    CreateUserRequest, ForgotPasswordRequest, PaginationParams, ResetPasswordRequest, UserResponse,
+    VerifyEmailRequest,
 };
 use axum::Router;
 use utoipa::OpenApi;
@@ -27,6 +28,8 @@ use utoipa_swagger_ui::SwaggerUi;
         users::handlers::delete_user,
         users::handlers::signup,
         users::handlers::verify_email,
+        users::handlers::forgot_password,
+        users::handlers::reset_password,
     ),
     components(
         schemas(
@@ -34,6 +37,8 @@ use utoipa_swagger_ui::SwaggerUi;
             CreateUserRequest,
             UserResponse,
             VerifyEmailRequest,
+            ForgotPasswordRequest,
+            ResetPasswordRequest,
             PaginationParams,
             ApiResponseUser,
             ApiErrorResponse,

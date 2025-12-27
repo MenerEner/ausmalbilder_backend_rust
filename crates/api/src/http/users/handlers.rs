@@ -1,7 +1,8 @@
 use crate::http::AppError;
 use crate::http::state::AppState;
 use crate::http::users::dtos::{
-    CreateUserRequest, PaginationParams, UserResponse, VerifyEmailRequest,
+    CreateUserRequest, ForgotPasswordRequest, PaginationParams, ResetPasswordRequest, UserResponse,
+    VerifyEmailRequest,
 };
 use crate::http::{ApiResponse, PaginatedResponse};
 use application::use_cases::{CreateUserInput, SignupInput};
@@ -206,6 +207,69 @@ pub async fn verify_email(
     Json(payload): Json<VerifyEmailRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     state.verify_email_use_case.execute(&payload.token).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/forgot-password",
+    tag = "users",
+    request_body = ForgotPasswordRequest,
+    responses(
+        (status = 202, description = "Password reset email sent (accepted)"),
+        (status = 400, description = "Invalid request payload", body = crate::http::ApiErrorResponse),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
+    )
+)]
+pub async fn forgot_password(
+    State(state): State<AppState>,
+    Json(payload): Json<ForgotPasswordRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    payload
+        .validate()
+        .map_err(|e| AppError::BadRequest(e.to_string()))?;
+
+    // We use 202 Accepted to avoid user enumeration if we want,
+    // but here we just follow the use case.
+    // If user is not found, we still return 202 or handled error.
+    match state
+        .request_password_reset_use_case
+        .execute(&payload.email)
+        .await
+    {
+        Ok(_) => Ok(StatusCode::ACCEPTED),
+        // If user not found, we might want to return 202 anyway to avoid enumeration
+        Err(application::use_cases::RequestPasswordResetError::UserNotFound) => {
+            Ok(StatusCode::ACCEPTED)
+        }
+        Err(e) => Err(e.into()),
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/reset-password",
+    tag = "users",
+    request_body = ResetPasswordRequest,
+    responses(
+        (status = 204, description = "Password reset successfully"),
+        (status = 400, description = "Invalid or expired token", body = crate::http::ApiErrorResponse),
+        (status = 500, description = "Internal server error", body = crate::http::ApiErrorResponse)
+    )
+)]
+pub async fn reset_password(
+    State(state): State<AppState>,
+    Json(payload): Json<ResetPasswordRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    payload
+        .validate()
+        .map_err(|e| AppError::BadRequest(e.to_string()))?;
+
+    state
+        .reset_password_use_case
+        .execute(&payload.token, &payload.new_password)
+        .await?;
 
     Ok(StatusCode::NO_CONTENT)
 }
